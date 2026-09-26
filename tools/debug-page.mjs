@@ -1,0 +1,12 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+const p = await b.newPage();
+p.on('console', (m) => console.log('console', m.type(), m.text().slice(0, 300)));
+p.on('response', (r) => { if (r.status() >= 400) console.log('HTTP', r.status(), r.url()); });
+p.on('requestfailed', (r) => { if (!/facebook|google|redback|openweather/.test(r.url())) console.log('FAILED', r.url()); });
+p.on('pageerror', (e) => console.log('pageerror', e.message, (e.stack || '').split('\n').slice(0, 4).join(' | ')));
+await p.route(/(facebook|googlesyndication|googletagmanager|redbackai|openweathermap)/, (r) => r.abort());
+await p.goto(process.argv[2] || 'http://localhost:8888/', { waitUntil: 'networkidle' });
+await p.waitForTimeout(1000);
+console.log('root html length', await p.evaluate(() => document.getElementById('root').innerHTML.length));
+await b.close();

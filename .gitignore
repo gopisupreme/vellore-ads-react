@@ -1,0 +1,44 @@
+# Dependencies
+/node_modules
+
+# Build output (npm run build; copied to ../vellore-ads/app by deploy:local)
+/dist
+*.local
+
+# Vite cache
+.vite/
+
+# Test / comparison output (tools/compare.mjs)
+/compare-output
+/test-results
+/playwright-report
+/coverage
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python (tools/finish)
+__pycache__/
+*.py[cod]
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.suo
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db

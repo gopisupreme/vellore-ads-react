@@ -1,0 +1,26 @@
+@media only screen and (max-width: 600px) {
+		.listingpagemainsection{
+			margin-top: 0px !important;
+		}
+	}
+
+
+					@media only screen and (min-width: 600px) {
+						.li-width {
+							width: 100% !important;
+						}
+					}
+
+					.li-width {
+						width: 50%;
+					}
+				
+
+						.departments-row .department {
+							margin: 0 0 15px;
+
+						}
+
+						@media (min-width: 992px) .col-md-3 {
+							width:25px;
+						}

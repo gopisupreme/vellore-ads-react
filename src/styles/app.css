@@ -1,0 +1,6 @@
+/*
+ * The site's look comes from the PHP project's stylesheets (/assets/css/*),
+ * loaded in index.html exactly as templates/header.php loads them. Styles that
+ * a PHP view printed inline live next to that page and are only present while
+ * the page is shown.
+ */

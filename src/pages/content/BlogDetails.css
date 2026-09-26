@@ -1,0 +1,19 @@
+.page-blog{
+        overflow:hidden;
+    }
+    
+    
+@media (max-width: 500px) {
+    .inn-pag-ban1 {
+        font-size: 2.5vh !important;
+    }
+    
+}
+
+    
+@media (max-width: 500px) {
+    
+    .inn-pag-ban2{
+        font-size: 10px !important;
+    }
+}

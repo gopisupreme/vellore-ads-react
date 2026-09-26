@@ -1,0 +1,12 @@
+# Served from <site>/app/ (the React build). Bundles have content hashes in
+# their names, so they can be cached for a year; index.html is read by PHP
+# (controllers/ReactApp.php) and never needs to be fetched directly.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|woff2?|png|jpe?g|svg|webp)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+<Files "index.html">
+    Require all denied
+</Files>
+Options -Indexes
