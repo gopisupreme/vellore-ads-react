@@ -1146,7 +1146,7 @@ export default function Home({ resolved, data }) {
                   <li>
                     <div className="row">
                       <div className="input-field col s12">
-                        <input id="qEmail" type="email" name="qEmail" className="validate" autoComplete="off" pattern={"[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$"} title="example@example.com" required />
+                        <input id="qEmail" type="email" name="qEmail" className="validate" autoComplete="off" pattern={"[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$"} title="example@example.com" required />
                         {' '}
                         <label htmlFor="gfc_mail">
                           Email

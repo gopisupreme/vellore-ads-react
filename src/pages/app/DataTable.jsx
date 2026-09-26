@@ -8,13 +8,16 @@ import { useMemo, useState } from 'react';
  * pager, with the same CSS classes.
  *
  * columns: [{ title, width?, value(row) -> sortable/searchable value, render?(row, index) }]
+ * renderRows(visibleRows, start): optional, renders the page's <tr>s itself
  */
 const LENGTHS = [10, 25, 50, 100];
 
 /** The plugin's stylesheet, which the PHP list pages linked. */
 export const DataTablesCss = () => <link rel="stylesheet" type="text/css" href="/assets/css/datatables.css" />;
 
-export default function DataTable({ columns, rows, rowKey, className = 'datatable responsive-table bordered', initialSort = [0, 'asc'], sortable = true }) {
+export default function DataTable({
+  columns, rows, rowKey, className = 'datatable responsive-table bordered', initialSort = [0, 'asc'], sortable = true, renderRows,
+}) {
   const [query, setQuery] = useState('');
   const [length, setLength] = useState(10);
   const [page, setPage] = useState(0);
@@ -91,7 +94,7 @@ export default function DataTable({ columns, rows, rowKey, className = 'datatabl
         <tbody>
           {visible.length === 0 ? (
             <tr><td colSpan={columns.length} className="dataTables_empty">No data available in table</td></tr>
-          ) : visible.map((row, i) => (
+          ) : renderRows ? renderRows(visible, start) : visible.map((row, i) => (
             <tr key={rowKey ? rowKey(row) : start + i}>
               {columns.map((c, j) => <td key={j} style={c.style}>{c.render ? c.render(row, start + i) : c.value(row)}</td>)}
             </tr>

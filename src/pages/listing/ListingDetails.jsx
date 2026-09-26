@@ -709,7 +709,7 @@ export default function ListingDetails({ resolved, data }) {
                                 <span id="jobMErr"></span>
                               </div>
                               <div className="input-field col s6">
-                                <input type="email" className="validate" name="jobMail" id="jobMail" required autoComplete="off" pattern={"[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$"} title="example@example.com" />
+                                <input type="email" className="validate" name="jobMail" id="jobMail" required autoComplete="off" pattern={"[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$"} title="example@example.com" />
                                 {' '}
                                 <label htmlFor="re_mail" className="active">
                                   Email id{' '}
@@ -909,7 +909,7 @@ export default function ListingDetails({ resolved, data }) {
                           </div>
                           <div className="row">
                             <div className="input-field col s12">
-                              <input type="email" className="validate" name="emailR" id="emailR" required autoComplete="off" placeholder="Email Address" pattern={"[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$"} title="example@example.com" />
+                              <input type="email" className="validate" name="emailR" id="emailR" required autoComplete="off" placeholder="Email Address" pattern={"[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$"} title="example@example.com" />
                               {' '}
                               <label htmlFor="re_mail">
                                 Email id

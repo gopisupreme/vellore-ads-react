@@ -83,7 +83,7 @@ function RegisterForm({ kind, messages }) {
         </div>
         <div className="row">
           <div className="input-field col s12">
-            <input type="email" name="reg_email" required id="reg_email" autoComplete="off" placeholder="Email Address" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" title="example@example.com" onBlur={check} />
+            <input type="email" name="reg_email" required id="reg_email" autoComplete="off" placeholder="Email Address" pattern="[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$" title="example@example.com" onBlur={check} />
             {error('reg_email', 'emailError')}
           </div>
         </div>

@@ -71,7 +71,7 @@ export default function ContactUs() {
                 </div>
                 <div>
                   <div className="input-field col s12">
-                    <input id="cEmail" type="email" name="cEmail" className="validate" autoComplete="off" placeholder="Email Address" pattern={"[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$"} title="example@example.com" required />
+                    <input id="cEmail" type="email" name="cEmail" className="validate" autoComplete="off" placeholder="Email Address" pattern={"[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$"} title="example@example.com" required />
                     {' '}
                     <span id="qEmailErr"></span>
                   </div>

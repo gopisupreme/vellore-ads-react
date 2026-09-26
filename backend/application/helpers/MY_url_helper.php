@@ -14,6 +14,16 @@ if (!function_exists('redirect')) {
 			$uri = site_url($uri);
 		}
 		if (react_request()) {
+			// a form handler that sends the visitor back after failed validation: the
+			// app keeps its form on screen and shows the errors (they were lost before)
+			$errors = react_validation_errors();
+			if ($errors && strtoupper((string) $_SERVER['REQUEST_METHOD']) === 'POST') {
+				$messages = array_values(array_filter(react_messages(), function ($m) use ($errors) {
+					return !in_array($m['text'], $errors, true) && $m['text'] !== implode(' ', $errors);
+				}));
+				react_send_json(array('ok' => false, 'errors' => $errors, 'messages' => $messages));
+				exit;
+			}
 			react_send_json(array('ok' => true, 'redirect' => $uri));
 			exit;
 		}

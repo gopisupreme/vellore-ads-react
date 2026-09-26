@@ -18,13 +18,20 @@ trait React_pages
 	{
 		// read from the URL: routes such as users/(:any)/(:any) => users/$1 drop the later segments
 		$page = (string) $this->uri->segment(3);
-		$method = '_data_' . strtolower(preg_replace('/[^A-Za-z0-9_]/', '', $page));
-		if ($page === '' || !method_exists($this, $method)) {
+		$name = strtolower(preg_replace('/[^A-Za-z0-9_]/', '', str_replace('-', '_', $page)));
+		$method = '_data_' . $name;
+		$args = array_slice(array_values($this->uri->segment_array()), 3);
+		if ($page !== '' && method_exists($this, $method)) {
+			$data = $this->$method($args);
+		} elseif ($page !== '' && method_exists($this, '_data_page')) {
+			$data = $this->_data_page($name, $args); // pages built from one pattern (see Connect_pages)
+		} else {
+			$data = null;
+		}
+		if ($data === null) {
 			$this->output->set_status_header(404);
 			return $this->_react_json(array('error' => 'Unknown page'));
 		}
-		$args = array_slice(array_values($this->uri->segment_array()), 3);
-		$data = $this->$method($args);
 		if (!isset($data['redirect'])) {
 			$data['messages'] = array_merge(isset($data['messages']) ? $data['messages'] : array(), react_messages());
 		}

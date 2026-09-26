@@ -1,6 +1,10 @@
 <?php
+require_once APPPATH . 'core/Connect_pages.php';
+
 class Connect extends CI_Controller
 {
+	use Connect_pages; // api_data/<page>: JSON for the React pages of the admin panel (core/Connect_pages.php)
+
 	public function __construct()
 	{
 		parent::__construct();
@@ -732,13 +736,7 @@ class Connect extends CI_Controller
 	// Category Page Data
 	public function action_category()
 	{
-		$data['title'] = 'Admin Add Category';
-		$data['company'] = $this->Company_Model->getCompanyInfo();
-		$data['category'] = $this->Company_Model->getCategory();
-		$data['action'] = $this->input->post('action');
-		$data['id'] = $this->input->post('id');
-		$data['deletelisting'] = $this->input->post('deletelisting');
-		$this->load->view('connect/action-category', $data);
+		$this->_category_action('category'); // status switch / delete (AJAX), see core/Connect_pages.php
 	}
 
 	// Sub Category Page List
@@ -901,6 +899,7 @@ class Connect extends CI_Controller
 	}
 	public function action_edit_job()
 	{
+		$this->_admin_only();
 		$editId = $this->uri->segment(3);
 		$postData = array(
 			'company_name' => $this->input->post('company_name'),
@@ -943,6 +942,7 @@ class Connect extends CI_Controller
 
 	public function delete_job()
 	{
+		$this->_admin_only();
 
 		$listingId = $this->uri->segment(3);
 		$this->db->where('id', $listingId);
@@ -996,7 +996,11 @@ class Connect extends CI_Controller
 		$data['title'] = 'Admin Add Reviews';
 		$postData = $this->input->post();
 
-		$userData = $this->db->query("SELECT * FROM `listing` WHERE `l_title` = '" . $postData['title'] . "'")->row_array();
+		$userData = $this->db->get_where('listing', array('l_title' => isset($postData['title']) ? $postData['title'] : ''))->row_array();
+		if (!$userData) {
+			$this->session->set_flashdata('reviews_listed', '<div class="alert alert-danger">Please choose the listing title from the list.</div>');
+			redirect('connect/add_review');
+		}
 		$pid = $userData['l_id'];
 
 		$date = date("Y-m-d");
@@ -1012,7 +1016,7 @@ class Connect extends CI_Controller
 			"r_rating" => '5',
 			"r_postid" => $pid,
 			"r_image" => 'default.png',
-			"r_reviewid" => trim($postData['qReview']),
+			"r_reviewid" => isset($postData['qReview']) ? trim($postData['qReview']) : '0',
 			"r_date" => trim($date),
 			"r_month" => trim($month),
 			"r_year" => trim($year),
@@ -1020,9 +1024,8 @@ class Connect extends CI_Controller
 			"r_status" => trim($status)
 		);
 		$this->db->insert('reviews', $newPost);
-		$this->load->view('admin/header', $data);
-		$this->load->view('connect/all-reviews', $data);
-		$this->load->view('admin/footer', $data);
+		$this->session->set_flashdata('reviews_listed', '<div class="alert alert-success">Review Added Successfully.</div>');
+		redirect('connect/all_reviews');
 	}
 	// Reviews Page Data
 	public function add_reviews()
@@ -1801,6 +1804,7 @@ class Connect extends CI_Controller
 				$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 
 				if ($this->form_validation->run() === FALSE) {
+					$this->session->set_flashdata('user_listed', validation_errors());
 					redirect('connect/add_user', $data);
 				} else {
 					if (isset($postData['files']) && $postData['files'] != "") {
@@ -1817,7 +1821,7 @@ class Connect extends CI_Controller
 							#$uploadError = array('upload_error' => $this->upload->display_errors());
 							$uploadError = $this->upload->display_errors();
 							$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
-							redirect('connect/profile_edit', $data);
+							redirect('connect/add_user', $data);
 						}
 						$file_info = $this->upload->data('fileToUpload');
 						$file_name = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
@@ -1852,6 +1856,7 @@ class Connect extends CI_Controller
 				$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 
 				if ($this->form_validation->run() === FALSE) {
+					$this->session->set_flashdata('user_listed', validation_errors());
 					redirect('connect/edit_user/' . $listingId, $data);
 				} else {
 					if (isset($postData['files']) && $postData['files'] != "") {
@@ -1868,7 +1873,7 @@ class Connect extends CI_Controller
 							#$uploadError = array('upload_error' => $this->upload->display_errors());
 							$uploadError = $this->upload->display_errors();
 							$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
-							redirect('connect/profile_edit', $data);
+							redirect('connect/edit_user/' . $listingId, $data);
 						}
 						$file_info = $this->upload->data('fileToUpload');
 						$file_name = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
@@ -1940,6 +1945,7 @@ class Connect extends CI_Controller
 				$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 
 				if ($this->form_validation->run() === FALSE) {
+					$this->session->set_flashdata('user_listed', validation_errors());
 					redirect('connect/add_customer', $data);
 				} else {
 					if (isset($postData['files']) && $postData['files'] != "") {
@@ -1956,7 +1962,7 @@ class Connect extends CI_Controller
 							#$uploadError = array('upload_error' => $this->upload->display_errors());
 							$uploadError = $this->upload->display_errors();
 							$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
-							redirect('connect/profile_edit', $data);
+							redirect('connect/add_customer', $data);
 						}
 						$file_info = $this->upload->data('fileToUpload');
 						$file_name = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
@@ -1992,6 +1998,7 @@ class Connect extends CI_Controller
 				$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 
 				if ($this->form_validation->run() === FALSE) {
+					$this->session->set_flashdata('user_listed', validation_errors());
 					redirect('connect/edit_customer/' . $listingId, $data);
 				} else {
 					if (isset($postData['files']) && $postData['files'] != "") {
@@ -2008,7 +2015,7 @@ class Connect extends CI_Controller
 							#$uploadError = array('upload_error' => $this->upload->display_errors());
 							$uploadError = $this->upload->display_errors();
 							$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
-							redirect('connect/profile_edit', $data);
+							redirect('connect/edit_customer/' . $listingId, $data);
 						}
 						$file_info = $this->upload->data('fileToUpload');
 						$file_name = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
@@ -2028,7 +2035,7 @@ class Connect extends CI_Controller
 					$this->db->where('u_id', $listingId);
 					$this->db->update('users', $insertData);
 					$this->session->set_flashdata('user_listed', '<div class="alert alert-success">Customer Updated Successfully.</div>');
-					redirect('connect/edit_user/' . $listingId, $data);
+					redirect('connect/edit_customer/' . $listingId, $data);
 				}
 			}
 		} else {
@@ -2176,6 +2183,7 @@ class Connect extends CI_Controller
 				$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 
 				if ($this->form_validation->run() === FALSE) {
+					$this->session->set_flashdata('location_listed', validation_errors());
 					redirect('connect/add_location', $data);
 				} else {
 					$fullname = $postData['fname'] . " " . $postData['lname'];
@@ -2200,6 +2208,7 @@ class Connect extends CI_Controller
 				$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 
 				if ($this->form_validation->run() === FALSE) {
+					$this->session->set_flashdata('location_listed', validation_errors());
 					redirect('connect/edit_location/' . $listingId, $data);
 				} else {
 					$insertData = array(
@@ -2342,7 +2351,7 @@ class Connect extends CI_Controller
 						#$uploadError = array('upload_error' => $this->upload->display_errors());
 						$uploadError = $this->upload->display_errors();
 						$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
-						redirect('connect/admin_ads_add', $data);
+						redirect('connect/quick_ads_add', $data);
 					}
 					$file_info = $this->upload->data('file-input');
 					$file_name = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
@@ -3114,8 +3123,9 @@ class Connect extends CI_Controller
 	 * @return Response
 	 */
 	// Premium Edit Data
-	public function premiumEdit($id)
+	public function premiumEdit($id = null)
 	{
+		$id = $this->uri->segment(3); // the route connect/(:any)/(:any) does not pass it on
 		if ((!$this->session->userdata('login')) || ($this->session->userdata('type') != "admin")) {
 			redirect('users/login');
 		}
@@ -3147,7 +3157,7 @@ class Connect extends CI_Controller
 	}
 
 	// Premium Action Data
-	public function action_premium($id)
+	public function action_premium($id = null)
 	{
 		if ((!$this->session->userdata('login')) || ($this->session->userdata('type') != "admin")) {
 			redirect('users/login');
@@ -4361,6 +4371,7 @@ class Connect extends CI_Controller
 			$this->form_validation->set_rules('address', 'Address', 'required');
 			$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 			if ($this->form_validation->run() === FALSE) {
+				$this->session->set_flashdata('user_listed', validation_errors());
 				redirect('connect/profile_edit', $data);
 			} else {
 				if (isset($postData['files']) && $postData['files'] != "") {
@@ -4381,14 +4392,25 @@ class Connect extends CI_Controller
 					}
 					$userData = $this->db->query("SELECT * FROM `users` WHERE `u_id` = '" . $userId . "'")->row_array();
 					$path = "assets/uploads/" . $userData['u_img'];
-					unlink($path);
+					if ($userData['u_img'] != '' && is_file($path)) {
+						unlink($path);
+					}
 					$file_info = $this->upload->data('fileToUpload');
 					$file_name = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
 				} else {
 					$userData = $this->db->query("SELECT * FROM `users` WHERE `u_id` = '" . $userId . "'")->row_array();
 					$file_name = $userData['u_img'];
 				}
-				$this->Connect_Model->profile_edit_data($postData, $file_name);
+				// the signed-in admin's own row (profile_edit_data() needs arguments this form has not, and took the id from the form)
+				$this->db->where('u_id', $userId)->update('users', array(
+					'u_fullname' => trim($postData['fullname']),
+					'u_email' => trim($postData['email']),
+					'u_mobile' => trim($postData['mobile']),
+					'u_dob' => trim($postData['dob']),
+					'u_gender' => trim($postData['gender']),
+					'u_address' => trim($postData['address']),
+					'u_img' => trim($file_name),
+				));
 				$this->session->set_flashdata('user_listed', '<div class="alert alert-success">Profile Updated Successfully.</div>');
 				redirect('connect/profile_edit', $data);
 
@@ -4417,9 +4439,8 @@ class Connect extends CI_Controller
 		$this->form_validation->set_rules('confpass', 'Confirm Password', 'required|xss_clean|min_length[6]|max_length[15]');
 		$this->form_validation->set_error_delimiters('<div class="alert alert-danger">', '</div>');
 		if ($this->form_validation->run() == FALSE) {
-			$this->load->view('admin/header', $data);
-			$this->load->view('connect/change-password', $data);
-			$this->load->view('admin/footer', $data);
+			$this->session->set_flashdata('password_listed', validation_errors());
+			redirect('connect/change_password');
 		} else {
 			$que = $this->db->query("SELECT * FROM `users` WHERE `u_id` = '$userId'");
 			$row = $que->row_array();
@@ -4465,6 +4486,7 @@ class Connect extends CI_Controller
 			redirect('connect/admin_setting');
 		}
 		$postData = $this->input->post();
+		$logo = $userLogo = $adminLogo = ''; // unchanged unless a new file is uploaded
 
 		if (isset($postData['logo']) && $postData['logo'] != "") {
 			$new_name = time() . $_FILES["logoUpload"]['name'];
@@ -4475,20 +4497,16 @@ class Connect extends CI_Controller
 			#$config['max_height']  = '768'; //The max of the images height in px
 			$config['overwrite'] = FALSE; //If exists an image with the same name it will overwrite. Set to  false if don't want to overwrite
 			$config['file_name'] = $new_name;
-			$this->load->library('upload', $config); //Load the upload CI library
+			$this->load->library('upload');
+			$this->upload->initialize($config); // each logo has its own file name
 			if (!$this->upload->do_upload('logoUpload')) {
 				#$uploadError = array('upload_error' => $this->upload->display_errors());
 				$uploadError = $this->upload->display_errors();
 				$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
 				//   redirect('connect/edit_location/'.$listingId, $data);
 			}
-			$userData = $this->db->query("SELECT * FROM `our_services` WHERE `os_id` = '" . $postData['listingId'] . "'")->row_array();
-			$path = "./assets/images/services/" . $userData['g_image'];
-			if (file_exists($path)) {
-				unlink($path);
-			}
 			$file_info = $this->upload->data('logoUpload');
-			echo $logo = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
+			$logo = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
 		}
 
 		if (isset($postData['userLogo']) && $postData['userLogo'] != "") {
@@ -4500,17 +4518,13 @@ class Connect extends CI_Controller
 			#$config['max_height']  = '768'; //The max of the images height in px
 			$config['overwrite'] = FALSE; //If exists an image with the same name it will overwrite. Set to  false if don't want to overwrite
 			$config['file_name'] = $new_name;
-			$this->load->library('upload', $config); //Load the upload CI library
+			$this->load->library('upload');
+			$this->upload->initialize($config); // each logo has its own file name
 			if (!$this->upload->do_upload('userLogoUpload')) {
 				#$uploadError = array('upload_error' => $this->upload->display_errors());
 				$uploadError = $this->upload->display_errors();
 				$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
 				//   redirect('connect/edit_location/'.$listingId, $data);
-			}
-			$userData = $this->db->query("SELECT * FROM `our_services` WHERE `os_id` = '" . $postData['listingId'] . "'")->row_array();
-			$path = "./assets/images/services/" . $userData['g_image'];
-			if (file_exists($path)) {
-				unlink($path);
 			}
 			$file_info = $this->upload->data('userLogoUpload');
 			$userLogo = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
@@ -4525,17 +4539,13 @@ class Connect extends CI_Controller
 			#$config['max_height']  = '768'; //The max of the images height in px
 			$config['overwrite'] = FALSE; //If exists an image with the same name it will overwrite. Set to  false if don't want to overwrite
 			$config['file_name'] = $new_name;
-			$this->load->library('upload', $config); //Load the upload CI library
+			$this->load->library('upload');
+			$this->upload->initialize($config); // each logo has its own file name
 			if (!$this->upload->do_upload('adminLogoUpload')) {
 				#$uploadError = array('upload_error' => $this->upload->display_errors());
 				$uploadError = $this->upload->display_errors();
 				$this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
 				//   redirect('connect/edit_location/'.$listingId, $data);
-			}
-			$userData = $this->db->query("SELECT * FROM `our_services` WHERE `os_id` = '" . $postData['listingId'] . "'")->row_array();
-			$path = "./assets/images/services/" . $userData['g_image'];
-			if (file_exists($path)) {
-				unlink($path);
 			}
 			$file_info = $this->upload->data('adminLogoUpload');
 			$adminLogo = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
@@ -4543,15 +4553,8 @@ class Connect extends CI_Controller
 
 
 		$this->Connect_Model->updateAdminSetting($postData, $logo, $userLogo, $adminLogo);
-		$userId = $this->session->userdata('uid');
-		$data['title'] = 'Admin Setting';
-		$data['company'] = $this->Company_Model->getCompanyInfo();
-		$data['category'] = $this->Company_Model->getCategory();
-		$data['h_rows'] = $this->User_Model->getuserInfo($userId);
-
-		$this->load->view('admin/header', $data);
-		$this->load->view('connect/admin-setting', $data);
-		$this->load->view('admin/footer', $data);
+		$this->session->set_flashdata('setting_listed', '<div class="alert alert-success">Settings Updated Successfully.</div>');
+		redirect('connect/admin_setting');
 	}
 
 	public function usersListingDataView()
@@ -4597,6 +4600,10 @@ class Connect extends CI_Controller
 		// bulk upload of listings/locations: admins only (there was no check)
 		if ((!$this->session->userdata('login')) || ($this->session->userdata('type') != "admin")) {
 			redirect('users/login');
+		}
+		if (empty($_FILES['file']['tmp_name'])) {
+			$this->session->set_flashdata('upload_listed', '<div class="alert alert-danger">Please choose an Excel file to upload.</div>');
+			redirect('connect/upload_listing');
 		}
 		if (isset($_FILES["file"]["name"])) {
 			$path = $_FILES["file"]["tmp_name"];
@@ -4691,6 +4698,10 @@ class Connect extends CI_Controller
 		// bulk upload of listings/locations: admins only (there was no check)
 		if ((!$this->session->userdata('login')) || ($this->session->userdata('type') != "admin")) {
 			redirect('users/login');
+		}
+		if (empty($_FILES['file']['tmp_name'])) {
+			$this->session->set_flashdata('upload_listed', '<div class="alert alert-danger">Please choose an Excel file to upload.</div>');
+			redirect('connect/upload_location');
 		}
 		if (isset($_FILES["file"]["name"])) {
 			$path = $_FILES["file"]["tmp_name"];
@@ -5675,7 +5686,7 @@ class Connect extends CI_Controller
 		$data['title'] = 'Admin Action Post List';
 
 		$postData = $this->input->post();
-		$data['listing'] = $this->Connect_Model->actionListingData($postData);
+		$data['listing'] = $this->Connect_Model->actionPostData($postData);
 		$this->session->set_flashdata('action_listing', '<div class="alert alert-success">Successfully Updated.</div>');
 		redirect('connect/search_post', 'refresh');
 
@@ -7932,13 +7943,7 @@ class Connect extends CI_Controller
 	// Category Page Data
 	public function action_category_matrimony()
 	{
-		$data['title'] = 'Admin Add Category';
-		$data['company'] = $this->Company_Model->getCompanyInfo();
-		$data['category'] = $this->Company_Model->getCategory();
-		$data['action'] = $this->input->post('action');
-		$data['id'] = $this->input->post('id');
-		$data['deletelisting'] = $this->input->post('deletelisting');
-		$this->load->view('connect/action-category-matrimony', $data);
+		$this->_category_action('category_matrimony'); // status switch / delete (AJAX), see core/Connect_pages.php
 	}
 
 	// Sub Category Page List
@@ -7989,7 +7994,7 @@ class Connect extends CI_Controller
 						'status' => '1'
 					);
 
-					$this->db->insert('sub_category', $postData);
+					$this->db->insert('sub_category_matrimony', $postData);
 					$this->session->set_flashdata('sub_category_listed', '<div class="alert alert-success">Sub Category Added Successfully.</div>');
 					redirect('connect/all_sub_category_matrimony/' . $listingId, $data);
 				}
@@ -8179,7 +8184,7 @@ class Connect extends CI_Controller
 		$postData = $this->input->post();
 		$data['listing'] = $this->Connect_Model->actionSpaData($postData);
 		$this->session->set_flashdata('action_listing', '<div class="alert alert-success">Successfully Updated.</div>');
-		redirect('connect/search_matrimony', 'refresh');
+		redirect('connect/search_spa', 'refresh');
 
 	}
 
@@ -9435,13 +9440,7 @@ class Connect extends CI_Controller
 	// Category Page Data
 	public function action_category_spa()
 	{
-		$data['title'] = 'Admin Add Category';
-		$data['company'] = $this->Company_Model->getCompanyInfo();
-		$data['category'] = $this->Company_Model->getCategory();
-		$data['action'] = $this->input->post('action');
-		$data['id'] = $this->input->post('id');
-		$data['deletelisting'] = $this->input->post('deletelisting');
-		$this->load->view('connect/action-category-spa', $data);
+		$this->_category_action('category_spa'); // status switch / delete (AJAX), see core/Connect_pages.php
 	}
 
 	// Sub Category Page List
@@ -9492,7 +9491,7 @@ class Connect extends CI_Controller
 						'status' => '1'
 					);
 
-					$this->db->insert('sub_category', $postData);
+					$this->db->insert('sub_category_spa', $postData);
 					$this->session->set_flashdata('sub_category_listed', '<div class="alert alert-success">Sub Category Added Successfully.</div>');
 					redirect('connect/all_sub_category_spa/' . $listingId, $data);
 				}
@@ -11288,13 +11287,7 @@ class Connect extends CI_Controller
 	// Category Page Data
 	public function action_job_category()
 	{
-		$data['title'] = 'Admin Add Category';
-		$data['company'] = $this->Company_Model->getCompanyInfo();
-		$data['category_job'] = $this->Company_Model->getCategory();
-		$data['action'] = $this->input->post('action');
-		$data['id'] = $this->input->post('id');
-		$data['deletelisting'] = $this->input->post('deletelisting');
-		$this->load->view('connect/action-job-category', $data);
+		$this->_category_action('category_job'); // status switch / delete (AJAX), see core/Connect_pages.php
 	}
 
 	public function add_cinema()

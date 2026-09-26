@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BASE } from '../../../lib/php.js';
-import OwnerLayout from './OwnerLayout.jsx';
+import { AreaLayout, useSection } from '../area.jsx';
 import DataTable, { DataTablesCss } from '../DataTable.jsx';
 import { Alerts, useAppForm, usePageData } from '../shared.jsx';
 import { Field, FileField, RichText } from '../fields.jsx';
@@ -9,6 +9,7 @@ const mid = { verticalAlign: 'middle' };
 
 /** users/all_product (views/users/all-product.php). */
 export function AllProducts() {
+  const section = useSection();
   const { data, loading, error } = usePageData();
   const columns = [
     { title: 'S.No', width: '5%', style: mid, render: (r, i) => i + 1 },
@@ -28,8 +29,8 @@ export function AllProducts() {
       title: 'Action', width: '15%', style: mid,
       render: (r) => (
         <span className="list-enq-name">
-          <a href={`${BASE}users/edit_product/${r.p_id}`} title="Edit"><i className="fa fa-pencil" style={{ backgroundColor: '#263a78' }}></i></a>
-          <a href={`${BASE}users/action_product/${r.p_id}/delete`} title="Delete"
+          <a href={`${BASE}${section}/edit_product/${r.p_id}`} title="Edit"><i className="fa fa-pencil" style={{ backgroundColor: '#263a78' }}></i></a>
+          <a href={`${BASE}${section}/action_product/${r.p_id}/delete`} title="Delete"
             onClick={(e) => { if (!window.confirm('Are you sure want to continue?')) e.preventDefault(); }}>
             <i className="fa fa-trash" style={{ backgroundColor: '#ef0b0b' }}></i>
           </a>
@@ -38,14 +39,14 @@ export function AllProducts() {
     },
   ];
   return (
-    <OwnerLayout user={data?.user} status={{ loading, error }}>
+    <AreaLayout data={data} status={{ loading, error }}>
       <DataTablesCss />
       {data && (
         <div className="tz-2">
           <div className="tz-2-com tz-2-main">
             <h4>All Product Details</h4>
             <div style={{ padding: '20px' }}>
-              <ul><li className="page-back"><a href={`${BASE}users/add_product`}><i className="fa fa-plus" aria-hidden="true"></i> Add</a> </li></ul>
+              <ul><li className="page-back"><a href={`${BASE}${section}/add_product`}><i className="fa fa-plus" aria-hidden="true"></i> Add</a> </li></ul>
             </div>
             <Alerts messages={data.messages} />
             <div id="wrap">
@@ -62,7 +63,7 @@ export function AllProducts() {
           </div>
         </div>
       )}
-    </OwnerLayout>
+    </AreaLayout>
   );
 }
 
@@ -96,12 +97,13 @@ function ImagePreview({ src, alt }) {
 function ProductForm({ editing }) {
   const { data, loading, error } = usePageData();
   const form = useAppForm(editing ? 'product-edit' : 'product-add');
-  if (!data) return <OwnerLayout status={{ loading, error }} />;
+  if (!data) return <AreaLayout status={{ loading, error }} />;
   // mounted once the data is there, so the rows start from the product's colours and specifications
   return <ProductFormBody key={data.product?.p_id ?? 'new'} data={data} editing={editing} form={form} status={{ loading, error }} />;
 }
 
 function ProductFormBody({ data, editing, form, status }) {
+  const section = useSection();
   const { loading, error } = status;
   const p = data.product ?? {};
   const [category, setCategory] = useState(null);
@@ -113,10 +115,10 @@ function ProductFormBody({ data, editing, form, status }) {
   const categoryId = data.categories.find((c) => c.c_title === chosenCategory)?.c_id;
   const subcategories = data.subcategories.filter((s) => s.s_category == categoryId).map((s) => [s.s_title, s.s_title]);
   const showYears = (warranty ?? p.p_waranty) == '1';
-  const action = editing ? `users/query_product/${p.p_id}` : 'users/query_product';
+  const action = editing ? `${section}/query_product/${p.p_id}` : `${section}/query_product`;
 
   return (
-    <OwnerLayout user={data.user} status={{ loading, error }}>
+    <AreaLayout data={data} status={{ loading, error }}>
       <div className="tz-2">
         <div className="tz-2-com tz-2-main">
           <h4>Product</h4>
@@ -265,7 +267,7 @@ function ProductFormBody({ data, editing, form, status }) {
           </div>
         </div>
       </div>
-    </OwnerLayout>
+    </AreaLayout>
   );
 }
 

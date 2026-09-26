@@ -265,7 +265,7 @@
 							'adsPage' => trim($postData['adsPage']),
 							'adsShow' => 1,
 							'adsType' => trim($postData['adsType']),
-							'adsImage' => trim($file_name),
+							// the picture has its own form (editAdsImage); $file_name was never set here and blanked it
 							'fromDate' => trim($fromDate),
 							'toDate' => trim($toDate),
 							'amount' => trim($postData['adsAmount']),
@@ -293,7 +293,12 @@
 				'receiverId' => trim($postData['receiverId']),
 				'receiptNo' => trim($postData['receiptNo'])
 				);
-			$this->db->where('insertId', $listingId);
+			// only this ad's own (latest) payment entry: old entries of deleted ads can carry the same insertId
+			$account = $this->db->query("SELECT aid FROM `accounts` WHERE `insertId` = " . $this->db->escape($listingId) . " AND `description` = 'Advertisement' ORDER BY `aid` DESC LIMIT 1")->row_array();
+			if (!$account) {
+				return true;
+			}
+			$this->db->where('aid', $account['aid']);
 			$result = $this->db->update('accounts', $insertData2);
 			return $result;
 		}
@@ -604,9 +609,12 @@
 			$toDate = $postData['toDate'];
 			$action = $postData['action'];
 			if($action == 'active') {
-				$activeList = ("UPDATE `listing` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'inactive'");
+				$activeList = ("UPDATE `listing` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'inactive'");
 			} elseif($action == 'inactive') {
-				$activeList = ("UPDATE `listing` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'active'");
+				$activeList = ("UPDATE `listing` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'active'");
+			}
+			if (!isset($activeList)) {
+				return false; // no action chosen
 			}
 			$result = $this->db->query($activeList);
 			return $result;
@@ -897,9 +905,12 @@
 			$toDate = $postData['toDate'];
 			$action = $postData['action'];
 			if($action == 'active') {
-				$activeList = ("UPDATE `post_ad` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'inactive'");
+				$activeList = ("UPDATE `post_ad` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'inactive'");
 			} elseif($action == 'inactive') {
-				$activeList = ("UPDATE `post_ad` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'active'");
+				$activeList = ("UPDATE `post_ad` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'active'");
+			}
+			if (!isset($activeList)) {
+				return false; // no action chosen
 			}
 			$result = $this->db->query($activeList);
 			return $result;
@@ -1141,9 +1152,12 @@
 			$toDate = $postData['toDate'];
 			$action = $postData['action'];
 			if($action == 'active') {
-				$activeList = ("UPDATE `matrimony` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'inactive'");
+				$activeList = ("UPDATE `matrimony` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'inactive'");
 			} elseif($action == 'inactive') {
-				$activeList = ("UPDATE `matrimony` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'active'");
+				$activeList = ("UPDATE `matrimony` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'active'");
+			}
+			if (!isset($activeList)) {
+				return false; // no action chosen
 			}
 			$result = $this->db->query($activeList);
 			return $result;
@@ -1385,9 +1399,12 @@
 			$toDate = $postData['toDate'];
 			$action = $postData['action'];
 			if($action == 'active') {
-				$activeList = ("UPDATE `spa` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'inactive'");
+				$activeList = ("UPDATE `spa` SET `l_status` = 'active' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'inactive'");
 			} elseif($action == 'inactive') {
-				$activeList = ("UPDATE `spa` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN '".$fromDate."' AND '".$toDate."' AND `l_status` = 'active'");
+				$activeList = ("UPDATE `spa` SET `l_status` = 'inactive' WHERE `l_adddate` BETWEEN ".$this->db->escape($fromDate)." AND ".$this->db->escape($toDate)." AND `l_status` = 'active'");
+			}
+			if (!isset($activeList)) {
+				return false; // no action chosen
 			}
 			$result = $this->db->query($activeList);
 			return $result;

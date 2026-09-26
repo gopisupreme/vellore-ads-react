@@ -43,6 +43,25 @@ import {
   AllCategories, AddCategory, EditCategory, AllBrands, AddBrand, EditBrand, AllSubCategories, AddSubCategory, EditSubCategory,
 } from './app/users/Taxonomy.jsx';
 
+import AdminDashboard from './app/connect/Dashboard.jsx';
+import {
+  AllListing as AdminAllListing, AllMatrimony as AdminAllMatrimony, AllSpa as AdminAllSpa, AllPost as AdminAllPost,
+} from './app/connect/Listings.jsx';
+import { contentPages } from './app/connect/Content.jsx';
+import { categoryPages } from './app/connect/Categories.jsx';
+import { reportPages } from './app/connect/Reports.jsx';
+import { searchPages } from './app/connect/Search.jsx';
+import { jobPages } from './app/connect/Jobs.jsx';
+import { inSection } from './app/area.jsx';
+import { customerPages } from './app/customer/Customer.jsx';
+import { recruiterPages } from './app/recruiter/Recruiter.jsx';
+import { adsPages } from './app/connect/Ads.jsx';
+import { dialogPages } from './app/connect/DialogLists.jsx';
+import { accountPages } from './app/connect/Account.jsx';
+import { locationPages } from './app/connect/Locations.jsx';
+import { userPages } from './app/connect/Users.jsx';
+import { reviewPages } from './app/connect/Reviews.jsx';
+
 /** Anything without a React page is loaded from PHP. */
 function FromServer() {
   useEffect(() => {
@@ -124,6 +143,41 @@ const PAGES = {
   'users/all_sub_categories': AllSubCategories,
   'users/add_sub_categories': AddSubCategory,
   'users/edit_sub_categories': EditSubCategory,
+  // admin panel (backend/app/pages.json: connect)
+  'connect/dashboard': AdminDashboard,
+  'connect/all_listing': AdminAllListing,
+  'connect/all_matrimony': AdminAllMatrimony,
+  'connect/all_spa': AdminAllSpa,
+  'connect/all_post': AdminAllPost,
+  ...contentPages,
+  ...categoryPages,
+  ...reportPages,
+  ...searchPages,
+  ...jobPages,
+  // the owner's product and order pages, in the admin frame
+  'connect/add_list': inSection('connect', AddListing),
+  'connect/edit_list': inSection('connect', EditListing),
+  'connect/add_matrimony': inSection('connect', AddMatrimony),
+  'connect/edit_matrimony': inSection('connect', EditMatrimony),
+  'connect/add_spa': inSection('connect', AddSpa),
+  'connect/edit_spa': inSection('connect', EditSpa),
+  'connect/add_post': inSection('connect', AddPost),
+  'connect/edit_post': inSection('connect', EditPost),
+  'connect/all_product': inSection('connect', AllProducts),
+  'connect/add_product': inSection('connect', AddProduct),
+  'connect/edit_product': inSection('connect', EditProduct),
+  'connect/all_order': inSection('connect', AllOrders),
+  'connect/view_order': inSection('connect', ViewOrder),
+  ...adsPages,
+  ...dialogPages,
+  ...accountPages,
+  ...locationPages,
+  ...userPages,
+  ...reviewPages,
+  // customer area (backend/app/pages.json: customer)
+  ...customerPages,
+  // recruiter area (backend/app/pages.json: recruiter)
+  ...recruiterPages,
   error404: Error404,
   404: Error404,
 };

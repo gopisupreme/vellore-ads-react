@@ -4,7 +4,7 @@
 #
 #   /             -> app/index.php (React)
 #   existing files and folders (assets, uploads, app/static ...) as they are
-#   page loads of users/ (sign-in, listing owner area) -> app/index.php (React)
+#   page loads of users/, connect/, customer/ and recruiter/ (sign-in pages and the signed-in areas) -> app/index.php (React)
 #   PHP-only sections (dashboards, forms, payments ...) -> index.php (CodeIgniter)
 #   everything else, including /api/* -> app/index.php, which hands pages
 #   the React app does not have to CodeIgniter
@@ -23,7 +23,7 @@ RewriteRule ^(index\.php|assets|images|js|css|uploads|favicon\.png)(/|$) - [L]
 # them (app/pages.json) and hands their other URLs (log out, delete links ...)
 # to CodeIgniter. Form posts go to CodeIgniter directly.
 RewriteCond %{REQUEST_METHOD} =GET
-RewriteRule ^(users(/(?!api_).*)?|recruiter/(login|register)/?)$ app/index.php [NC,L,QSA]
+RewriteRule ^((users|connect|customer|recruiter)(/(?!api_).*)?)$ app/index.php [NC,L,QSA]
 
 RewriteRule ^(assetsA|public|products|investor|matrimony_html|vlrbk|cgi-bin|my-stripe|stripePost|PayuController|PayuStatusController|User_Authentication|paytm|payment_by_paytm|paypalpayment|paypal|paypal_two|instatwo|cart|razor|recruiter|tamil-calendar|comments|categories|posts|product|matrimony|spa|Resume|job|users|users2|connect|post-free-ads|pages|Manage_Ajax|custom404|customer|cinema|review|administrator|pages2|shopping|Tamil_calendar)(/.*)?$ index.php/$0 [NC,L]
 

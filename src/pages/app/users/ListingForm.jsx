@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { BASE } from '../../../lib/php.js';
-import OwnerLayout from './OwnerLayout.jsx';
+import { AreaLayout, useSection } from '../area.jsx';
 import { Alerts, useAppForm, usePageData } from '../shared.jsx';
 import { Field, FileField, SuggestField } from '../fields.jsx';
 
@@ -12,23 +12,23 @@ import { Field, FileField, SuggestField } from '../fields.jsx';
  */
 const KINDS = {
   listing: {
-    action: 'users/addUserListing', doValue: 'addListing',
+    action: 'addUserListing', doValue: 'addListing', adminEdit: ['Manage Listing', 'Update Lisiting'],
     add: ['Manage Listing', 'Add New Lisiting'], edit: ['Manage Listings', 'Edit Listings'],
     jobSwitch: true, imageOnAdd: false,
   },
   matrimony: {
-    action: 'users/addUserMatrimony', doValue: 'addMatrimony',
+    action: 'addUserMatrimony', doValue: 'addMatrimony', adminEdit: ['Manage Matrimony Listing', 'Update Lisiting'],
     add: ['Manage Matrimony Listing', 'Add Matrimony Lisiting'], edit: ['Manage Matrimony Listings', 'Edit Matrimony Listings'],
     jobSwitch: false, imageOnAdd: true,
   },
   spa: {
-    action: 'users/addUserSpa', doValue: 'addSpa',
+    action: 'addUserSpa', doValue: 'addSpa', adminEdit: ['Manage Spa Listing', 'Update Lisiting'],
     add: ['Manage Spa Listing', 'Add Spa Lisiting'], edit: ['Manage Spa Listings', 'Edit Spa Listings'],
     jobSwitch: false, imageOnAdd: true,
   },
   // a post ad: no address, opening hours, job notifications or listing image
   post: {
-    action: 'users/addUserPost', doValue: 'addPost', noun: 'Post', post: true, suggestKind: 'listing',
+    action: 'addUserPost', doValue: 'addPost', noun: 'Post', post: true, suggestKind: 'listing', adminEdit: ['Manage Post', 'Update Post'],
     add: ['Manage Listing', 'Add New Post'], edit: ['Manage Post', 'Edit Post'],
     jobSwitch: false, imageOnAdd: false,
   },
@@ -46,13 +46,52 @@ const TimeSelect = ({ name, first, value }) => (
   </select>
 );
 
+/** Swiggy, Zomato and other delivery links of a hotel or restaurant (admin edit only). */
+function OnlineDelivery({ item }) {
+  return (
+    <>
+      <div className="row">
+        <div className="db-v2-list-form-inn-tit">
+          <h5>Online Food Delivery <span className="v2-db-form-note">(Enter website link and upload company image note:size 75x75):</span></h5>
+        </div>
+      </div>
+      <div className="row">
+        <Field id="l_onlineLink1" name="l_onlineLink1" label="Attach Your Swiggy Link" col="s10" value={item.l_onlineLink1} />
+        <div className="col s2"><div style={{ marginTop: '10px' }}><img src={`${BASE}assets/images/swiggy_logo.png`} alt="swiggy" /></div></div>
+      </div>
+      <div className="row">
+        <Field id="l_onlineLink2" name="l_onlineLink2" label="Attach Your Zomato Link" col="s10" value={item.l_onlineLink2} />
+        <div className="col s2"><div style={{ marginTop: '10px' }}><img src={`${BASE}assets/images/zomato_logo.png`} alt="zomato" /></div></div>
+      </div>
+      <div className="row">
+        <Field id="l_onlineLink3" name="l_onlineLink3" label="Attach Your Other Site Link (If any you have)" col="s7" value={item.l_onlineLink3} />
+        <div className="col s5">
+          <div className="row tz-file-upload">
+            <div className="col s9"><FileField name="onlineImage3" textName="onlineFiles3" /></div>
+            <div className="col s3">
+              <div style={{ marginTop: '10px' }}>
+                <img src={`${BASE}assets/images/services/${item.l_onlineImage3 || 'default.png'}`} alt="Online Link" width="50" height="50" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function ListingForm({ kind, editing }) {
   const conf = KINDS[kind];
+  const section = useSection();
+  const admin = section === 'connect';
   const { data, loading, error } = usePageData();
   const form = useAppForm(`${kind}-${editing ? 'edit' : 'add'}`);
   const categoryRef = useRef(null);
   const item = data?.item ?? {};
-  const [heading, title] = editing ? conf.edit : conf.add;
+  const [heading, title] = editing ? (admin ? conf.adminEdit : conf.edit) : conf.add;
+  const handler = `${section}/${conf.action}${editing ? `/${item.l_id}` : ''}`;
+  // the admin edits the online delivery links of hotels and restaurants (views/connect/edit-list.php)
+  const onlineDelivery = admin && editing && kind === 'listing' && ['Hotel', 'Restaurants'].includes(item.category);
   const days = new Set(item.opendays ?? []);
 
   // a new item (e.g. from the list) starts at the top of the page
@@ -60,7 +99,7 @@ function ListingForm({ kind, editing }) {
 
   const showImage = !conf.post && (editing || conf.imageOnAdd);
   return (
-    <OwnerLayout user={data?.user} status={{ loading, error }}>
+    <AreaLayout data={data} status={{ loading, error }}>
       {data && (
         <div className="tz-2">
           <div className="tz-2-com tz-2-main">
@@ -76,16 +115,26 @@ function ListingForm({ kind, editing }) {
               <div className="hom-cre-acc-left hom-cre-acc-right">
                 <div>
                   {/* key: a different item gets fresh fields */}
-                  <form key={item.l_id ?? 'new'} action={`${BASE}${conf.action}${editing ? `/${item.l_id}` : ''}`} method="post" encType="multipart/form-data"
-                    onSubmit={form.onSubmit(`/${conf.action}${editing ? `/${item.l_id}` : ''}`)}>
+                  <form key={item.l_id ?? 'new'} action={`${BASE}${handler}`} method="post" encType="multipart/form-data" onSubmit={form.onSubmit(`/${handler}`)}>
                     <input type="hidden" name="do" value={conf.doValue} />
                     <input type="hidden" name="uid" value={data.user.u_id} />
                     {editing && <input type="hidden" name="listingId" value={item.l_id} />}
+                    {admin && !editing && <input type="hidden" name="listingId" value="0" />}
                     {!conf.jobSwitch && <input type="hidden" name="job_apply" value="1" />}
                     <div className="row">
                       <Field id="fname" name="fname" label="First Name " col="s6" value={item.fname} pattern="^[A-Za-z]+$" title="Alphabetics Only" />
                       <Field id="lname" name="lname" label="Last Name " col="s6" value={item.lname} pattern="^[A-Za-z]+$" title="Alphabetics Only" />
                     </div>
+                    {admin && (
+                      <div className="row">
+                        <div className="input-field col s12">
+                          <select name="premium" className="browser-default" required={editing} defaultValue={item.type ?? data.premiums[0]?.name ?? ''}>
+                            {editing && <option value="" disabled>Choose your Premium</option>}
+                            {data.premiums.map((pr) => <option key={pr.name} value={pr.name}>{pr.name}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    )}
                     <div className="row">
                       {editing
                         ? <Field id="title" name="title" label={`${conf.noun ?? 'Listing'} Title *`} value={item.title} required />
@@ -96,7 +145,7 @@ function ListingForm({ kind, editing }) {
                     <div className="row"><Field id="whatsapp" name="whatsapp" label="Whatsapp " value={item.whatsapp} /></div>
                     <div className="row">
                       <Field id="email" name="email" label="Email " type="email" value={item.email}
-                        pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" title="example@example.com" />
+                        pattern="[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$" title="example@example.com" />
                     </div>
                     <div className="row"><Field id="website" name="website" label="Website Link" value={item.website} /></div>
                     {!conf.post && <div className="row"><Field id="address" name="address" label="Address *" value={item.address} required /></div>}
@@ -140,6 +189,15 @@ function ListingForm({ kind, editing }) {
                               {' '}Job Apply Notifications Required?
                               <input type="checkbox" name="job_apply" value="1" defaultChecked={item.job_apply} /> <span className="lever"></span>
                             </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {admin && kind === 'listing' && (
+                      <div className="row">
+                        <div className="input-field col s12">
+                          <div className="switch ">
+                            <label> Shopping <input type="checkbox" name="shopping" value="1" defaultChecked={item.l_shopping == 1} /> <span className="lever"></span> </label>
                           </div>
                         </div>
                       </div>
@@ -193,6 +251,15 @@ function ListingForm({ kind, editing }) {
                         </div>
                       </div>
                     ))}
+                    {onlineDelivery && <OnlineDelivery item={item} />}
+                    {admin && editing && kind === 'listing' && !onlineDelivery && (
+                      <>
+                        <input type="hidden" name="onlineFiles3" value={item.l_onlineImage3 ?? ''} />
+                        <input type="hidden" name="l_onlineLink1" value={item.l_onlineLink1 ?? ''} />
+                        <input type="hidden" name="l_onlineLink2" value={item.l_onlineLink2 ?? ''} />
+                        <input type="hidden" name="l_onlineLink3" value={item.l_onlineLink3 ?? ''} />
+                      </>
+                    )}
                     <br />
                     <div className="row">
                       <div className="col s12">
@@ -208,7 +275,7 @@ function ListingForm({ kind, editing }) {
           </div>
         </div>
       )}
-    </OwnerLayout>
+    </AreaLayout>
   );
 }
 

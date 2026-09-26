@@ -33,7 +33,7 @@ export default function ForgotPassword({ data }) {
               <div>
                 <div className="input-field s12">
                   <input type="text" name="uName" required className="validate" autoComplete="off" placeholder="Email Address"
-                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" title="example@example.com"
+                    pattern="[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$" title="example@example.com"
                     value={name} onChange={(e) => setName(e.target.value)} />
                   <label>Email Address</label>
                   <span className="text-danger"></span>

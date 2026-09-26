@@ -1,5 +1,6 @@
 <?php
 require_once APPPATH . 'core/React_pages.php';
+require_once APPPATH . 'helpers/listing_form_helper.php';
 
 class Users extends CI_Controller
 {
@@ -351,11 +352,9 @@ EOD;
 		}
 		$this->db->where('l_id', $listingId);
 		$this->db->delete('listing');
+		$this->db->where('r_postid', $listingId)->delete('reviews'); // its reviews go too, as connect/action_listing does
 		$this->session->set_flashdata('list', '<div class="alert alert-success">Listing Deleted Successfully.</div>');
-		//           $this->load->view('templates/header', $data);
-// 			$this->load->view('users/db-all-listing', $data);
-// 			$this->load->view('templates/footer', $data);
-		redirect('users/db-all-listing', $data);
+		redirect('users/db_all_listing');
 
 	}
 	public function db_review()
@@ -6047,13 +6046,7 @@ EOD;
 	 */
 	private function _item_kind($kind)
 	{
-		$kinds = array(
-			'listing' => array('listing', 'category', 'sub_category', 'assets/images/list-deta/', 'assets/images/services/', 'users/db_all_listing'),
-			'matrimony' => array('matrimony', 'category_matrimony', 'sub_category_matrimony', 'assets/images/matrimony-data/', 'assets/images/matrimony-services/', 'users/db_all_matrimony'),
-			'spa' => array('spa', 'category_spa', 'sub_category_spa', 'assets/images/spa-data/', 'assets/images/spa-services/', 'users/db_all_spa'),
-			'post' => array('post_ad', 'category', 'sub_category', 'assets/images/post-data/', 'assets/images/post-services/', 'users/db_all_post'),
-		);
-		return $kinds[$kind];
+		return listing_form_kind($kind); // helpers/listing_form_helper.php
 	}
 
 	/** The add forms (views/users/db-listing-add.php and its matrimony / spa twins). */
@@ -6085,52 +6078,7 @@ EOD;
 			$this->session->set_flashdata('user_listed', '<div class="alert alert-danger">You can only edit your own listings.</div>');
 			return array('redirect' => base_url() . $listPage);
 		}
-		$name = explode(' ', (string) $row['l_fullname']);
-		$loc = $this->db->get_where('location', array('loc_id' => $row['l_loc_id']))->row_array();
-		$cate = $this->db->get_where($cateTable, array('c_name' => $row['l_category']))->row_array();
-		$timing = explode(' to ', (string) $row['l_timing']);
-		$image = function ($dir, $file) {
-			return $file != '' ? base_url() . $dir . $file : base_url() . 'assets/images/services/default.png';
-		};
-		$services = array();
-		for ($i = 1; $i <= 6; $i++) {
-			$services[] = array(
-				'name' => (string) $row["l_serviceName$i"],
-				'image' => $image($serviceDir, (string) $row["l_serviceImage$i"]),
-			);
-		}
-		return array(
-			'user' => $user,
-			'item' => array(
-				'l_id' => $row['l_id'],
-				'fname' => $name[0],
-				'lname' => isset($name[1]) ? $name[1] : '',
-				'title' => $row['l_title'],
-				'phone' => $row['l_phone'],
-				'landline' => isset($row['l_landline']) ? $row['l_landline'] : '',
-				'whatsapp' => isset($row['l_whatsapp']) ? $row['l_whatsapp'] : '',
-				'email' => $row['l_email'],
-				'website' => $row['l_website'],
-				'address' => $row['l_address'],
-				'location' => $loc ? $loc['loc_name'] : '',
-				'cate' => $cate ? $cate['c_name'] : '',
-				// the edit page printed every sub category joined with nothing between them
-				'subcate' => str_replace(', ', '', (string) $row['l_subcategory']),
-				'opendays' => array_values(array_filter(explode(' : ', (string) $row['l_opendays']), 'strlen')),
-				'opentime' => $timing[0],
-				'closetime' => isset($timing[1]) ? $timing[1] : '',
-				'desc' => $row['l_desc'],
-				'key' => $row['l_key'],
-				'job_apply' => isset($row['l_job_apply']) && $row['l_job_apply'] == 1,
-				'facebook' => $row['l_facebook'],
-				'google' => $row['l_google'],
-				'twitter' => $row['l_twitter'],
-				'googleMap' => $row['l_googleMap'],
-				'degreeView' => $row['l_degreeView'],
-				'coverImage' => $row['l_coverImage'] != '' ? base_url() . $coverDir . $row['l_coverImage'] : base_url() . 'assets/images/services/default.png',
-				'services' => $services,
-			),
-		);
+		return array('user' => $user, 'item' => listing_form_item($kind, $row));
 	}
 
 	private function _data_db_listing_edit($args)

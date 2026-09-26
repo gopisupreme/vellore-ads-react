@@ -10,6 +10,8 @@ import { initLegacyPlugins, destroyLegacyPlugins } from './lib/dom.js';
 import { countVisit, afterRender } from './legacy/behaviors.js';
 import WeatherBar from './components/WeatherBar.jsx';
 import Footer from './components/Footer.jsx';
+import JobsTheme from './components/jobs/JobsTheme.jsx';
+import JobsFooter from './components/jobs/JobsFooter.jsx';
 import { pageFor } from './pages/registry.js';
 
 export default function App() {
@@ -73,14 +75,21 @@ export default function App() {
   }, [navigate, reactPages, locations, appPages]);
 
   const Page = page ? pageFor(page.resolved.view) : null;
+  // the admin panel has its own frame (views/admin/header.php); the jobs pages (recruiter area)
+  // their own stylesheets, header and footer (views/recruiter/header.php, templates/footer-job.php)
+  const view = String(page?.resolved.view ?? '');
+  const admin = view.startsWith('connect/');
+  const jobs = view.startsWith('recruiter/');
 
   return (
     <>
-      <WeatherBar />
+      {!admin && !jobs && <WeatherBar />}
+      {jobs && <JobsTheme />}
       <div ref={pageRoot} style={{ display: 'contents' }}>
         {Page && <Page key={page.path} resolved={page.resolved} data={page.data} />}
       </div>
-      <Footer />
+      {!admin && !jobs && <Footer />}
+      {jobs && <JobsFooter />}
     </>
   );
 }

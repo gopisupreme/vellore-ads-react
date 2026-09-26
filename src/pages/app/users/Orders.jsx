@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BASE } from '../../../lib/php.js';
-import OwnerLayout from './OwnerLayout.jsx';
+import { AreaLayout, useSection } from '../area.jsx';
 import DataTable, { DataTablesCss } from '../DataTable.jsx';
 import { Alerts, Modal, useAppForm, usePageData } from '../shared.jsx';
 
@@ -8,6 +8,7 @@ const mid = { verticalAlign: 'middle' };
 
 /** users/db_all_orders (views/users/all-order.php). */
 export function AllOrders() {
+  const section = useSection();
   const { data, loading, error } = usePageData();
   const form = useAppForm('order-delete');
   const [deleting, setDeleting] = useState(null);
@@ -23,15 +24,15 @@ export function AllOrders() {
       title: 'Action', width: '10%',
       render: (r) => (
         <span className="list-enq-name">
-          <a href={`${BASE}users/view_order/${r.order_id}`} title="view"><i className="fa fa-eye" style={{ backgroundColor: '#006df0' }}></i></a>
+          <a href={`${BASE}${section}/view_order/${r.order_id}`} title="view"><i className="fa fa-eye" style={{ backgroundColor: '#006df0' }}></i></a>
           <a href="#!" title="Delete" onClick={(e) => { e.preventDefault(); setDeleting(r); }}><i className="fa fa-trash" style={{ backgroundColor: '#ef0b0b' }}></i></a>
         </span>
       ),
     },
   ];
-  const action = deleting && `users/action_order/${deleting.order_id}/delete`;
+  const action = deleting && `${section}/action_order/${deleting.order_id}/delete`;
   return (
-    <OwnerLayout user={data?.user} status={{ loading, error }}>
+    <AreaLayout data={data} status={{ loading, error }}>
       <DataTablesCss />
       {data && (
         <div className="tz-2">
@@ -68,7 +69,7 @@ export function AllOrders() {
           </form>
         )}
       </Modal>
-    </OwnerLayout>
+    </AreaLayout>
   );
 }
 
@@ -77,7 +78,7 @@ export function ViewOrder() {
   const { data, loading, error } = usePageData();
   const o = data?.order;
   return (
-    <OwnerLayout user={data?.user} status={{ loading, error }}>
+    <AreaLayout data={data} status={{ loading, error }}>
       {o && (
         <div className="tz-2">
           <div className="tz-2-com tz-2-main">
@@ -133,6 +134,6 @@ export function ViewOrder() {
           </div>
         </div>
       )}
-    </OwnerLayout>
+    </AreaLayout>
   );
 }

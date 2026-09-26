@@ -555,12 +555,14 @@ final class Site
 			$section = strtolower($segs[0]);
 			$method = strtolower(str_replace('-', '_', $segs[1]));
 			Session::set('city', $this->company()['city']); // the controllers' constructors
-			$page = Session::get('login')
+			// the admin panel (connect/) is for administrators only, as Connect's methods checked
+			$allowed = Session::get('login') && ($section !== 'connect' || Session::get('type') === 'admin');
+			$page = $allowed
 				? array('view' => "$section/$method", 'route' => 'app',
 					'params' => array('section' => $section, 'method' => $method, 'args' => array_slice($segs, 2)),
 					'title' => self::appPages()[$section][$method])
 				// the controllers sent visitors who are not signed in to the sign-in page
-				: array('view' => 'redirect', 'redirect' => $this->baseUrl() . 'users/login');
+				: array('view' => 'redirect', 'redirect' => $this->baseUrl() . ($section === 'recruiter' ? 'recruiter/login' : 'users/login'));
 		} elseif (in_array(strtolower($segs[0]), self::PHP_PREFIXES, true) || count($segs) > 3
 			|| preg_match('/\.(php|html?|xml|txt|js|css|png|jpe?g|gif|webp|svg|ico|pdf|json)$/i', end($segs))) {
 			$page = array('view' => 'legacy');

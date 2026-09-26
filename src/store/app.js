@@ -16,7 +16,9 @@ const appSlice = createSlice({
   initialState: { data: {}, forms: {}, version: 0 },
   reducers: {
     appDataRequested(state, { payload: { url } }) {
-      state.data[url] = { loading: true, data: state.data[url]?.data ?? null, error: null };
+      // a revisit waits for fresh data: the old answer's rows and one-time messages are stale
+      if (state.data[url]?.loading) return;
+      state.data[url] = { loading: true, data: null, error: null };
     },
     appDataLoaded(state, { payload: { url, data } }) {
       state.data[url] = { loading: false, data, error: null };

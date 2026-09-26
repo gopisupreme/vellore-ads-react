@@ -83,6 +83,7 @@ $route['posts'] = 'posts/index';
 $route['custom404/(:any)'] = 'custom404/$1';
 $route['default_controller'] = 'pages/view';
 $route['customer/(:any)'] = 'customer/$1';
+$route['customer/(:any)/(:any)'] = 'customer/$1'; // customer/api_data/<page> (the site's (:any)/(:any)/(:any) city route would take it)
 
 $route['cinema'] = 'Cinema/index';
 $route['cinema/add_cinema'] = 'connect/add_cinema';

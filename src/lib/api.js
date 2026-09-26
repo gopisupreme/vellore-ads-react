@@ -51,3 +51,20 @@ export const getAppData = (url) => request({ url, headers: APP_HEADERS });
 export const submitAppForm = (action, formData) =>
   request({ url: action, method: 'POST', headers: APP_HEADERS, data: formData });
 
+
+/**
+ * A POST to one of the admin panel's AJAX handlers (connect/action_listing
+ * ...), which answer JSON or plain text: the parsed JSON, else the text.
+ */
+export async function postAction(action, fields) {
+  const res = await http.post(action, new URLSearchParams(fields).toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+  });
+  if (res.status >= 400) throw new Error(`${res.status} ${action}`);
+  const text = String(res.data ?? '').trim();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}

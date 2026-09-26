@@ -1,14 +1,18 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+require_once APPPATH . 'core/React_pages.php';
+
 class Customer extends CI_Controller {
+    use React_pages; // api_data/<page>: JSON for the React pages of the customer area (the _data_* methods below)
+
     function __construct(){
         parent::__construct();
         $this->load->model('Company_Model');
         $this->load->model('Cart_Model');
     }
     public function dashboard(){
-        if((!$this->session->userdata('login')) && ($this->session->userdata('type') != "customer")) {
+        if(!$this->session->userdata('login')) {
             redirect('users/login');
         }
         $userId = $this->session->userdata('uid');
@@ -24,7 +28,7 @@ class Customer extends CI_Controller {
         $this->load->view('templates/footer', $data);
     }
     public function profile() {
-        if((!$this->session->userdata('login')) && ($this->session->userdata('type') != "customer")) {
+        if(!$this->session->userdata('login')) {
             redirect('users/login');
         }
         $userId = $this->session->userdata('uid');
@@ -39,7 +43,7 @@ class Customer extends CI_Controller {
         $this->load->view('templates/footer', $data);
     }
     public function profile_edit(){
-        if((!$this->session->userdata('login')) && ($this->session->userdata('type') != "customer")) {
+        if(!$this->session->userdata('login')) {
             redirect('users/login');
         }
         $userId = $this->session->userdata('uid');
@@ -77,19 +81,51 @@ class Customer extends CI_Controller {
                         $this->session->set_flashdata('uploadError', $uploadError); //If for some reason the upload could not be done, returns the error in a flashdata and redirect to the page you specify in $urlYouWantToReturn
                         redirect('customer/profile_edit', $data);
                     }
-                    $userData = $this->db->query("SELECT * FROM `users` WHERE `u_id` = '".$userId."'")->row_array();
+                    $userData = $this->db->get_where('users', array('u_id' => $userId))->row_array();
                     $path = "assets/uploads/".$userData['u_img'];
-                    unlink($path);
-                    $file_info = $this->upload->data('fileToUpload');
+                    if ($userData['u_img'] != '' && is_file($path)) {
+                        unlink($path);
+                    }
                     $file_name = $new_name; //Now you got the file name in the $file_name var. Use it to record in db.
                 } else {
-                    $userData = $this->db->query("SELECT * FROM `users` WHERE `u_id` = '".$userId."'")->row_array();
+                    $userData = $this->db->get_where('users', array('u_id' => $userId))->row_array();
                     $file_name = $userData['u_img'];
-                    $this->User_Model->editUserProfile($postData, $userId, $file_name);
-                    $this->session->set_flashdata('user_profile', '<div class="alert alert-success">Profile Updated Successfully</div>');
-                    redirect('customer/profile_edit', $data);
                 }
+                // saved with or without a new photo (a new photo used to be uploaded without saving the form)
+                $this->User_Model->editUserProfile($postData, $userId, $file_name);
+                $this->session->set_flashdata('user_profile', '<div class="alert alert-success">Profile Updated Successfully</div>');
+                redirect('customer/profile_edit', $data);
             }
         }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* React pages of the customer area: api_data/<page> (React_pages)     */
+    /* ------------------------------------------------------------------ */
+
+    /** The signed-in customer's row without password or token (every page shows it), or the sign-in redirect. */
+    private function _customer_data()
+    {
+        if (!$this->session->userdata('login')) {
+            return array('redirect' => base_url() . 'users/login');
+        }
+        $user = $this->User_Model->getuserInfo($this->session->userdata('uid'));
+        unset($user['u_password'], $user['u_token']);
+        return array('user' => $user);
+    }
+
+    private function _data_dashboard($args)
+    {
+        return $this->_customer_data();
+    }
+
+    private function _data_profile($args)
+    {
+        return $this->_customer_data();
+    }
+
+    private function _data_profile_edit($args)
+    {
+        return $this->_customer_data();
     }
 }

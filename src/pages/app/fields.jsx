@@ -103,7 +103,7 @@ export function RichText({ id, name, value = '', height, maxLength }) {
     let alive = true;
     loadCkeditor().then((CKEDITOR) => {
       if (!alive || !ref.current) return;
-      editor = CKEDITOR.replace(ref.current, height ? { height } : undefined);
+      editor = CKEDITOR.replace(ref.current, { versionCheck: false, ...(height ? { height } : {}) });
       editor.on('change', () => editor.updateElement());
     }).catch(() => {}); // without the editor it stays a plain textarea
     return () => {
