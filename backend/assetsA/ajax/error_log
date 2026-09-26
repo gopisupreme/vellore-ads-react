@@ -1,0 +1,12 @@
+[01-Nov-2017 08:20:11 Etc/GMT] PHP Notice:  Undefined variable: conn in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:11 Etc/GMT] PHP Warning:  mysqli_query() expects parameter 1 to be mysqli, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:11 Etc/GMT] PHP Warning:  mysqli_fetch_assoc() expects parameter 1 to be mysqli_result, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 71
+[01-Nov-2017 08:20:19 Etc/GMT] PHP Notice:  Undefined variable: conn in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:19 Etc/GMT] PHP Warning:  mysqli_query() expects parameter 1 to be mysqli, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:19 Etc/GMT] PHP Warning:  mysqli_fetch_assoc() expects parameter 1 to be mysqli_result, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 71
+[01-Nov-2017 08:20:46 Etc/GMT] PHP Notice:  Undefined variable: conn in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:46 Etc/GMT] PHP Warning:  mysqli_query() expects parameter 1 to be mysqli, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:46 Etc/GMT] PHP Warning:  mysqli_fetch_assoc() expects parameter 1 to be mysqli_result, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 71
+[01-Nov-2017 08:20:48 Etc/GMT] PHP Notice:  Undefined variable: conn in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:48 Etc/GMT] PHP Warning:  mysqli_query() expects parameter 1 to be mysqli, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 3
+[01-Nov-2017 08:20:48 Etc/GMT] PHP Warning:  mysqli_fetch_assoc() expects parameter 1 to be mysqli_result, null given in /home/velloreads/public_html/admin/ajax/all-listing.php on line 71

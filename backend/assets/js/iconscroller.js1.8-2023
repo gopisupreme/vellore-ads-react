@@ -1,0 +1,1 @@
+$(function(){$(".icon_scroll .owl-carousel").owlCarousel({loop:!0,margin:40,nav:!0,dots:!1,loop:!1,navText:["<div class='nav-btn prev-slide'></div>","<div class='nav-btn next-slide'></div>"],responsive:{0:{items:3},600:{items:6},1000:{items:9}}})});

@@ -1,0 +1,17 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /login/
+Disallow: /register/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /search?
+Disallow: /user/
+Disallow: /profile/
+Disallow: /dashboard/
+
+# Allow all listings and category pages to be crawled
+Allow: /Vellore/
+Allow: /category/
+
+# Sitemap location
+Sitemap: https://velloreads.com/sitemap.xml

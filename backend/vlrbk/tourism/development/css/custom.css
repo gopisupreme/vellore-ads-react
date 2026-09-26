@@ -1,0 +1,261 @@
+img{
+	max-width:100%;
+}
+.clear50{
+	clear:both;
+	height:50px;
+}
+.proj{
+	margin-top:0px;
+	padding:80px 0 0 0;
+}
+.top-header{
+	position: absolute;
+    width: 100%;
+    top: 0px;
+	z-index:999;
+}
+.bannerContent{
+	position: absolute;
+    width: 100% !important;
+    top: 40px;
+	z-index:99;
+}
+.homebanner{
+	background:#eff7fa;
+	padding:45px 0 45px 0;
+    
+}
+.dir1-home-head:before {
+    content: '';
+    position: absolute;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 14%, rgba(0, 0, 0, 0.35) 66%);
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    z-index: 9;
+}
+.must_visit .image_section img{
+	width:100%;
+	height:167px;
+}
+.must_visit .owl-item{
+	padding:10px;
+}
+.must_visit .owl-item p{
+	font-size: 14px;
+	padding: 0 10px 20px 10px;
+}
+.align-center{
+	text-align:center;
+}
+.must_visit .tourz-sear-btn{
+	padding: 0 20px;
+	margin:30px 0 0 0;
+    border-radius: 4px;
+	display:inline-block !important;
+}
+.must_visit .owl-carousel .nav-btn {
+    height: 45px;
+    position: absolute;
+    width: 45px;
+    cursor: pointer;
+    top: 50%!important;
+    background: #3e86ed;
+    border-radius: 110px;
+	
+}
+.must_visit .owl-carousel .next-slide{
+	right: -60px;
+}
+.must_visit .owl-carousel .prev-slide{
+	left: -60px;
+}
+
+.must_visit .owl-carousel .next-slide::before {
+    font-family: FontAwesome;
+    font-weight: 600;
+    content: "\f105";
+    color: #fff;
+    font-size: 26px;
+    line-height: 44px;
+}
+.must_visit .owl-carousel .prev-slide::before {
+    font-family: FontAwesome;
+    font-weight: 600;
+    content: "\f104";
+    color: #fff;
+    font-size: 26px;
+    line-height: 44px;
+}
+.spot_listing h1{
+	color: #050f34;
+    padding-bottom: 35px;
+}
+.hotel_section h2{
+	padding:20px 0 20px;
+}
+.hotel_section .card-text:last-child {
+    margin-bottom: 0;
+}
+.hotel_section .rating-badge {
+    background: #237c74;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: manrope bold,sans-serif;
+    font-size: 14px;
+    line-height: 1.7rem;
+    display: inline-block;
+}
+.hotel_section h4{
+	padding:0 0 15px 0;
+}
+.hotel_section .textMuted {
+    color: #949494;
+    font-size: 12px;
+}
+.hotel_section .price {
+    color: #237c74;
+    font-size: 20px;
+}
+.hotel_section .price .tour_price{
+	color:#ff7601;
+}
+.hotel_section .owl-item{
+	padding:10px;
+}
+.hotel_section .dir-hli-5{
+	background: #ffffff;
+    min-height: 320px
+}
+.hotel_section .owl-carousel .next-slide::before {
+    font-family: FontAwesome;
+    font-weight: 600;
+    content: "\f105";
+    color: #fff;
+    font-size: 26px;
+    line-height: 44px;
+}
+.hotel_section .owl-carousel .prev-slide::before {
+    font-family: FontAwesome;
+    font-weight: 600;
+    content: "\f104";
+    color: #fff;
+    font-size: 26px;
+    line-height: 44px;
+}
+.hotel_section .owl-carousel .nav-btn {
+    height: 45px;
+    position: absolute;
+    width: 45px;
+    cursor: pointer;
+    top: 20%!important;
+    background: #3e86ed;
+    border-radius: 110px;
+}
+/** immersive_experiences **/
+.immersive_experiences{
+	background:#fff;
+	padding:25px 0 0 0;
+}
+.immersive_experiences .container{
+	margin-top:50px;
+}
+.immersive_experiences .list-pg-lt{
+	width:100%;
+}
+.immersive_experiences .image_slider img{
+	max-width:100%;
+}
+.immersive_experiences .image_slider{
+	position:relative;
+	display:flex;
+	align-items: center;
+	justify-content: center;
+}
+.immersive_experiences .image_slider h2{
+	position:absolute;
+	top:45%;
+	color:#fff;
+	font-size: 55px;
+	width:100%;
+	text-align:center;
+	z-index:9;
+}
+.immersive_experiences .content{
+	text-align:left;
+	padding:50px 0 ;
+  }
+.immersive_experiences .content h3{
+	padding:20px 0 15px 0;
+}
+.immersive_experiences .tourz-sear-btn{
+	padding: 0 20px;
+	margin:30px 0 0 0;
+    border-radius: 4px;
+	display:inline-block !important;
+}
+.immersive_experiences .owl-carousel .nav-btn {
+    height: 45px;
+    position: absolute;
+    width: 45px;
+    cursor: pointer;
+    top: 50%!important;
+    background: #fff;
+    border-radius: 110px;
+	
+}
+.immersive_experiences .owl-carousel .next-slide{
+	right: -60px;
+}
+.immersive_experiences .owl-carousel .prev-slide{
+	left: -60px;
+}
+
+.immersive_experiences .owl-carousel .next-slide::before {
+    font-family: FontAwesome;
+    font-weight: 600;
+    content: "\f105";
+    color: #000;
+    font-size: 26px;
+    line-height: 44px;
+}
+.immersive_experiences .owl-carousel .prev-slide::before {
+    font-family: FontAwesome;
+    font-weight: 600;
+    content: "\f104";
+    color: #000;
+    font-size: 26px;
+    line-height: 44px;
+}
+/** immersive_experiences **/
+.tour_packages{
+	
+}
+.tour_packages .must_visit_Slider h3{
+	text-align: left;
+    padding: 0 10px;
+    font-size: 18px;
+    line-height: 23px;
+	color:#2a2b33;
+}
+.tour_packages .card-text{
+	color:#8b8d9f;
+}
+.tour_packages .must_visit_Slider p{
+	font-weight:600;
+	text-align: left;
+	padding:5px 10px !important;
+}
+.tour_packages .card-text{
+	text-align: left;
+	padding:5px 10px !important;
+	font-size:16px;
+}
+.tour_packages .card-text .price {
+    color: #ff7601;
+    font-size: 20px;
+}
+

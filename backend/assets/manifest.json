@@ -1,0 +1,24 @@
+{
+
+  "author": "Redback",
+  "background_color": "#ffffff",
+  "description": "Progressive Web App Example",
+  "display": "standalone",
+  "icons": [
+
+    {
+      "src": "https://velloreads.com/assets/images/app_icon.png",
+      "sizes": "50x50",
+      "type": "image/png"
+    }
+
+  ],
+  "manifest_version": 2,
+  "name": "Vellor ADS",
+  "orientation": "portrait",
+  "short_name": "Vellor ADS",
+  "start_url": "https://velloreads.com/",
+  "theme_color": "#ffffff",
+  "version": "0.1"
+
+}

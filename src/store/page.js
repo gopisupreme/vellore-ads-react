@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { call, put, takeLatest } from 'redux-saga/effects';
+import { call, cancel, fork, put, take } from 'redux-saga/effects';
 import { fetchPageState } from '../lib/api.js';
 import { applyHead } from '../lib/head.js';
 
@@ -46,7 +46,19 @@ function* loadPage({ payload: { path, hash } }) {
   }
 }
 
-// a newer URL cancels the request for the previous one
+/**
+ * A newer URL cancels the request for the previous one. A repeat of the URL
+ * already loading is ignored (React's development double effects asked twice,
+ * and the first answer took the page's one-time session messages).
+ */
 export function* pageSaga() {
-  yield takeLatest(pageRequested.type, loadPage);
+  let task = null;
+  let loading = null;
+  while (true) {
+    const action = yield take(pageRequested.type);
+    if (task?.isRunning() && loading === action.payload.path) continue;
+    if (task?.isRunning()) yield cancel(task);
+    loading = action.payload.path;
+    task = yield fork(loadPage, action);
+  }
 }

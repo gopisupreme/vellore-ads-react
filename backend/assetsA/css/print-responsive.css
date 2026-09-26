@@ -1,0 +1,107 @@
+ @media print {
+    body {
+	font-size: 10px; 
+	padding: 0px;
+	margin: 0px;
+	}
+	.header span{
+		line-height: 20px;
+		margin-left: -80px;
+	}
+	#highlight tbody tr td{
+		line-height: 20px;
+		font-weight: 100;
+		font-family: verdana;
+		font-size: 10px;
+	}
+	#fonheight thead tr td, #fonheight tbody tr td, #fonheight tfoot tr td{
+		line-height: 20px;
+		font-size: 10px;
+		padding: 0px;
+		font-family: verdana;
+	}
+	#fonheight thead #bggrey {
+		background-color: #838282 !important;
+		-webkit-print-color-adjust:exact !important;
+	}
+	#fonheight tbody #bgdanger {
+		background-color: #f49d9d !important;
+		-webkit-print-color-adjust:exact !important;
+	}
+	#fonheight tbody #bginfo {
+		background-color: #c3d8e5 !important;
+		-webkit-print-color-adjust:exact !important;
+	}
+	#fonheight tfoot #bglightgrey {
+		background-color: #ededed !important;
+		-webkit-print-color-adjust:exact !important;
+	}
+	
+	/*-------------- payslip styles -------------------------*/
+	#payslip-header div:nth-child(1) {
+		line-height: 55px !important;
+		padding-left: 100px !important;
+	}
+	#payslip-header div:nth-child(1) span{
+		font-size: 20px !important;
+	}
+	#payslip-main #bgblue{
+		background: #00b0f0 !important;
+		-webkit-print-color-adjust:exact !important;
+	}
+	#payslip-main #bgblue td {
+		color: white !important;
+		-webkit-print-color-adjust:exact !important;
+		font-size: 13px !important;
+		text-align: center !important;
+	}
+	#payslip-main #salbol{
+		font-size: 13px !important;
+		color: #d80d0d !important;
+		-webkit-print-color-adjust:exact !important;
+	}
+	#payslip-main #table2 tbody tr td:nth-child(even) {
+	   text-align: center !important;
+	}
+}
+
+.bg-grey {
+	background-color: #838282;
+}
+.bg-lightgrey {
+	background-color: #ededed;
+}
+.bg-danger {
+	background-color: #f49d9d;
+}
+.bg-info {
+	background-color: #c3d8e5;
+}
+#highlight {
+	line-height: 25px;
+}
+
+
+/*-------------- payslip styles -------------------------*/
+#payslip-header div:nth-child(1) {
+	line-height: 47px;
+    padding-left: 300px;
+}
+#payslip-header div:nth-child(1) span{
+	font-size: 20px;
+}
+#payslip-main #bgblue{
+    background: #00b0f0;
+}
+#payslip-main #bgblue td {
+	color: white;
+	font-size: 16px;
+	text-align: center;
+}
+#payslip-main #salbol{
+	font-size: 18px;
+	color: #d80d0d;
+}
+#payslip-main #table2 tbody tr td:nth-child(even) {
+   text-align: center;
+}

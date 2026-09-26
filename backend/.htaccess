@@ -1,0 +1,28 @@
+# The site's .htaccess: public pages and /api go to the React front end.
+# .htaccess.php-only is the site's original file; copy it over this one to
+# serve every page from the PHP site again.
+#
+#   /             -> app/index.php (React)
+#   existing files and folders (assets, uploads, app/static ...) as they are
+#   sign-in pages (users/login, users/register ...) on GET -> app/index.php (React)
+#   PHP-only sections (dashboards, forms, payments ...) -> index.php (CodeIgniter)
+#   everything else, including /api/* -> app/index.php, which hands pages
+#   the React app does not have to CodeIgniter
+RewriteEngine On
+
+RewriteRule ^$ app/index.php [L,QSA]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# missing files in the asset folders stay 404s, as with the old .htaccess
+RewriteRule ^(index\.php|assets|images|js|css|uploads|favicon\.png)(/|$) - [L]
+
+# sign-in pages are React (GET only: forms of old PHP pages may still post here)
+RewriteCond %{REQUEST_METHOD} =GET
+RewriteRule ^(users/(login|register|forgot_pass|recruiter_login|recruiter_register)|recruiter/(login|register))/?$ app/index.php [NC,L,QSA]
+
+RewriteRule ^(assetsA|public|products|investor|matrimony_html|vlrbk|cgi-bin|my-stripe|stripePost|PayuController|PayuStatusController|User_Authentication|paytm|payment_by_paytm|paypalpayment|paypal|paypal_two|instatwo|cart|razor|recruiter|tamil-calendar|comments|categories|posts|product|matrimony|spa|Resume|job|users|users2|connect|post-free-ads|pages|Manage_Ajax|custom404|customer|cinema|review|administrator|pages2|shopping|Tamil_calendar)(/.*)?$ index.php/$0 [NC,L]
+
+RewriteRule ^ app/index.php [L,QSA]

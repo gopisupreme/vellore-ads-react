@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-/** Calls to the PHP backend's JSON API (application/controllers/Api.php). */
+/** Calls to the site's JSON API (backend/app/index.php). */
 
 export const http = axios.create({
   // parsed below, once the reply is known to be JSON (a PHP error page is HTML)
@@ -14,16 +14,19 @@ async function request(config) {
   const res = await http.request(config);
   const type = String(res.headers['content-type'] || '');
   if (!type.includes('application/json')) throw new Error(`${res.status} ${config.url}: the server did not answer with JSON`);
-  console.log(res.data);
-  return JSON.parse(res.data);
+  const data = JSON.parse(res.data);
+  // server failures (database down ...) answer { error }; a 404 page is still a page
+  if (res.status >= 500) throw new Error(`${res.status} ${config.url}: ${data?.error || 'server error'}`);
+  return data;
 }
 
 export const getJSON = (endpoint, params = {}) =>
   request({ url: `/api/${endpoint}?${new URLSearchParams(params)}` });
 
+/** A form POST that answers JSON: `/api/<endpoint>` or, with a leading slash, a PHP site action (/users/api_login). */
 export const postForm = (endpoint, fields) =>
   request({
-    url: `/api/${endpoint}`,
+    url: endpoint.startsWith('/') ? endpoint : `/api/${endpoint}`,
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
     data: new URLSearchParams(fields).toString(),

@@ -1,24 +1,33 @@
 # vellore-ads-react
 
-React (Vite) front end for velloreads.com. The backend stays the existing
-CodeIgniter project in `../vellore-ads`: it serves the data as JSON, keeps
-every admin/dashboard/payment page, and hands the React app its first page.
+The complete velloreads.com site: the React (Vite) front end and the PHP
+back end, in this one repository.
+
+* `src/` — the React app (Redux + redux-saga, axios, Tailwind).
+* `backend/` — the whole site as it goes on the server (`public_html`): the
+  PHP site (CodeIgniter: sign-in, dashboards, payments, forms, jobs,
+  matrimony, shopping ...) plus `app/`, the React app's folder:
+  `app/index.php` (JSON API + page entry, one file) and the build
+  (`app/index.html`, `app/static/`, written by `npm run build`).
 
 ## How it fits together
 
 ```
-browser ──> Apache ──> vellore-ads/index.php (CodeIgniter routes, unchanged URLs)
-                          │
-                          ├─ public pages ─> controllers/ReactApp.php
-                          │      resolves the URL with the same rules as Pages.php,
-                          │      prints the same <title>/meta tags as templates/header.php,
-                          │      embeds the page data, serves app/index.html  ──> React renders it
-                          │
-                          ├─ api/*        ─> controllers/Api.php + models/Frontend_Model.php (JSON)
-                          ├─ Manage_Ajax/* ─> unchanged (enquiry, contact, review forms)
-                          └─ users/, connect/, administrator/, job/, matrimony/, spa/,
-                             post-free-ads/, product/, payments ...  ─> unchanged PHP pages
+browser ──> Apache (backend/.htaccess)
+              │
+              ├─ files (assets/, uploads/, app/static/ ...)        ─> served as they are
+              ├─ users/, connect/, administrator/, Manage_Ajax/, pages/,
+              │  job/, matrimony/, post-free-ads/, payments ...    ─> index.php (CodeIgniter)
+              └─ everything else                                   ─> app/index.php
+                    ├─ /api/*        JSON for the React app
+                    ├─ React pages   resolves the URL with the same rules as the PHP site,
+                    │                prints its <title>/meta tags, embeds the page data
+                    │                in app/index.html  ──> React renders it
+                    └─ other pages   handed to index.php (CodeIgniter), rendered as before
 ```
+
+Both PHP parts use the same database, the same session (city, sign-in) and
+the same settings file, `backend/app/config.php`.
 
 * **Pages in React:** home, city home (`/Katpadi`), category / search results
   (`/Vellore/Hospital`), listing details (`/Vellore/<title>/<id>`), blog and
@@ -34,43 +43,95 @@ browser ──> Apache ──> vellore-ads/index.php (CodeIgniter routes, unchan
   the site's own CSS and jQuery plugins from `/assets` (Bootstrap, Materialize,
   Owl Carousel, lazysizes), loaded in the same order as the PHP templates.
   `src/legacy/` holds the ported `custom.js` and `manageAjax.js` behaviour.
-* **Rollback:** set `REACT_FRONTEND` to `false` in the PHP project's
-  `.env.php` and every page is served by the original PHP views again.
+* **Rollback:** copy `backend/.htaccess.php-only` (the site's original file)
+  over `backend/.htaccess`; every page is then served by the PHP site again.
 
-## Development
+## Settings
+
+`backend/app/config.php` (copy `backend/app/config.example.php`): database
+login, site address, session folder. It is not in git and is never uploaded,
+so each machine/server keeps its own. Environment variables with the same
+names override it. Without it the defaults suit MAMP (localhost, root/root).
+
+## Running everything in MAMP PRO
+
+MAMP PRO can serve the whole site, just as the live server does:
+
+1. MAMP PRO → Hosts → `localhost`: Document root = this repo's `backend/`
+   folder, port 8888, PHP 7.3 or 7.4.
+2. Start Apache and MySQL.
+3. `npm run build` once (or `npm run watch`, which rebuilds the React app
+   into `backend/app/` whenever a file in `src/` changes; refresh the page).
+4. Open http://localhost:8888.
+
+No settings file is needed: the defaults (localhost, root / root) are
+MAMP's MySQL. For instant reloads while editing React, set the MAMP host's
+port to 8890 instead and run `npm start` (Vite on :8888, using MAMP as the
+backend).
+
+
+```bash
+npm install     # once
+npm start       # Vite on :8888 + PHP backend on :8890 -> open http://localhost:8888
+```
+
+`npm start` needs MySQL running with the `velloreads` database (MAMP PRO:
+start MySQL). It uses MAMP's MySQL automatically unless
+`backend/app/config.php` says otherwise. If MAMP's Apache already serves
+`backend/` on :8890, only Vite is started. Ctrl+C stops everything.
+
+The same, step by step:
+
+Two ways to run `backend/` (needs MySQL with the `velloreads` database):
+
+* **MAMP PRO:** set the host's Document root to this repo's `backend/`
+  folder and its port to 8890.
+* **PHP's built-in server:** `npm run php` (PHP on :8890, follows
+  `backend/.htaccess`); set the database in `backend/app/config.php`.
+
+Then:
 
 ```bash
 npm install
-npm run php     # PHP built-in server on :8888 for ../vellore-ads (needs MySQL; see below)
-npm run dev     # Vite on http://localhost:5173, proxies PHP URLs to :8888
+npm run dev     # Vite on http://localhost:8888; /api, /assets and PHP pages are forwarded to :8890
 ```
-
-The PHP project reads its settings from `../vellore-ads/.env.php` (copy
-`.env.example.php`). For a local MySQL root user without a password:
-`DB_PASSWORD='' SESSION_SAVE_PATH=/tmp npm run php`.
 
 `npm run lint` — ESLint.
 
-## Production build
+## Production (FTP)
 
 ```bash
-npm run build                 # -> dist/ (index.html, static/, .htaccess)
-npm run deploy:local          # copies dist/ into ../vellore-ads/app/
+npm run build   # writes the React app into backend/app/ (index.html, static/)
 ```
 
-Then upload `vellore-ads/app/` (and any changed PHP files) to the server.
-Full server checklist: `../vellore-ads/DEPLOY.md`.
+Upload `backend/` to the site root (`public_html`).
+
+First upload only:
+
+1. Back up the server's files first, especially
+   `application/config/*.php`: the ones in this repository may differ from
+   the live ones (mail settings, keys).
+2. Create `app/config.php` on the server from `app/config.example.php` with
+   the live database login (the one in the server's current
+   `application/config/database.php`) and `APP_BASE_URL`
+   (`https://velloreads.com/`).
+3. Skip `assets/images/`, `assets/uploads/` and `assets/advertise/`: they are
+   already on the server (several GB, not in git).
+
+Later uploads: `npm run build`, then upload the changed files, always
+`app/index.html` and `app/static/` together.
+
+Needs PHP 7.3+ with mysqli, Apache with mod_rewrite.
 
 ## Checking parity with the PHP site
 
-Run the PHP project twice: once normally (React) and once with
-`REACT_FRONTEND=false` (original pages), then:
+Serve `backend/` twice: once as it is (React) and once with
+`.htaccess.php-only` as its `.htaccess` (the original PHP pages), then:
 
 ```bash
-APP_BASE_URL=http://localhost:8889/ REACT_FRONTEND=false DB_PASSWORD='' \
-  php -S localhost:8889 -t ../vellore-ads tools/php-dev-router.php &
-node tools/compare.mjs / /Vellore/Hospital /Vellore/Sandhya-Hospital/1103 /about-us   # add --mobile for 390px
-node tools/behaviour-test.mjs                                                           # clicks through the site
+LEGACY=http://localhost:8889 REACT=http://localhost:8888 \
+  node tools/compare.mjs / /Vellore/Hospital /Vellore/Sandhya-Hospital/1103 /about-us   # add --mobile for 390px
+REACT=http://localhost:8888 node tools/behaviour-test.mjs                                # clicks through the site
 ```
 
 `compare.mjs` loads each URL from both servers in Chrome and diffs the rendered
@@ -104,8 +165,16 @@ These PHP bugs broke features, so the React version does not copy them:
 ## Layout
 
 ```
+backend/                   the site root (public_html)
+  .htaccess                routing: React pages + /api -> app/index.php, PHP sections -> index.php
+  .htaccess.php-only       the original .htaccess (rollback)
+  app/index.php            React server file: JSON API, page entry, shared session, hand-over to CodeIgniter
+  app/config.example.php   settings (copy to app/config.php; not in git)
+  application/, system/    the PHP site (CodeIgniter); config/site_settings.php reads app/config.php
+  assets/                  CSS, JS, fonts, images (uploaded media not in git)
 src/
   main.jsx, App.jsx        bootstrapping, page loading, SEO tags, link interception
+  store/                   Redux slices and sagas (site, page, search, listings, listing)
   config/site.js           which URLs are React vs PHP
   lib/                     api client, PHP helpers (url_title, number_format ...), jQuery bridge
   legacy/                  custom.js + manageAjax.js behaviour
@@ -115,6 +184,5 @@ tools/
   php2jsx.mjs              PHP view -> JSX converter
   finish/*.py              scripts that finished the converted views
   compare.mjs, behaviour-test.mjs, diff-regions.mjs, debug-page.mjs
-  php-dev-router.php       router for PHP's built-in server
-  copy-build.mjs           dist/ -> vellore-ads/app/
+  dev-router.php           backend/.htaccess for PHP's built-in server (npm run php)
 ```

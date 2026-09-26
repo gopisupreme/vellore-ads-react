@@ -1,0 +1,27 @@
+<?php 
+#advertise-data5.php
+foreach($company as $companyRow) { }
+?>
+<?php 
+$ads = $this->db->query("SELECT * FROM `ads_with_us` WHERE `adsPage` = '3' AND `adsShow` = '2' AND `adsType` = '2' AND `view` = '1' AND DATE(NOW()) BETWEEN `fromDate` AND `toDate`");
+$checkAds = $ads->num_rows();
+if($checkAds > 0) {
+	foreach($ads->result() as $adsRow) {
+		$imageId[] = $adsRow['id'];
+	}
+	$num = count($imageId);
+	$rand = rand(0, $num-1);
+	$id_today = $imageId[$rand];
+	sleep(5);
+	//print_r($imageId);
+	$showAds = $this-db->query("SELECT * FROM `ads_with_us` WHERE `id` = '".$id_today."'");
+	foreach($showAds->result() as $showAdsRow) { }
+	$userAds = $this->db->query("SELECT * FROM `users` WHERE `u_id` = '".$showAdsRow['username']."'");
+	foreach($userAds->result() as $userAdsRow) { }
+?>						
+	<a href="<?php echo $showAdsRow['website']; ?>" title="<?php echo $showAdsRow['title']; ?>" target="_blank"><img src="<?php echo base_url(); ?>assets/advertise/<?php echo $showAdsRow['adsImage']; ?>" class="img-responsive center" alt="<?php echo $showAdsRow['title']; ?>"/></a>
+<?php  
+} else {
+?>
+	<a href="advertise.php" target="_blank"><img src="<?php echo base_url(); ?>assets/advertise/red2.png" class="img-responsive center" alt="<?php echo $companyRow->cName; ?>"/></a>
+<?php } ?>

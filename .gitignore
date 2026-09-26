@@ -1,8 +1,10 @@
 # Dependencies
 /node_modules
 
-# Build output (npm run build; copied to ../vellore-ads/app by deploy:local)
+# Build output (npm run build writes the React app into backend/app/)
 /dist
+/backend/app/index.html
+/backend/app/static/
 *.local
 
 # Vite cache
@@ -42,3 +44,20 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# ---- backend/ (the PHP site, uploaded as public_html) ----
+# settings with passwords (see backend/app/config.example.php)
+/backend/app/config.php
+/backend/application/config/email.local.php
+# uploaded media: several GB, lives on the server; keep a local copy for development
+/backend/assets/images/
+/backend/assets/uploads/
+/backend/assets/advertise/
+# archives, logs and caches
+/backend/**/*.zip
+/backend/**/*.tar
+/backend/error_log
+/backend/application/logs/*
+!/backend/application/logs/index.html
+/backend/application/cache/*
+!/backend/application/cache/index.html

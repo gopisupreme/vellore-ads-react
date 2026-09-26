@@ -6,9 +6,10 @@ import page, { pageLoaded, pageSaga } from './page.js';
 import search, { searchSaga } from './search.js';
 import listings, { listingsSaga } from './listings.js';
 import listing, { listingSaga } from './listing.js';
+import account, { accountSaga } from './account.js';
 
 function* rootSaga() {
-  yield all([pageSaga(), searchSaga(), listingsSaga(), listingSaga()]);
+  yield all([pageSaga(), searchSaga(), listingsSaga(), listingSaga(), accountSaga()]);
 }
 
 /**
@@ -18,7 +19,7 @@ function* rootSaga() {
 export function createStore({ boot, initialPage }) {
   const sagas = createSagaMiddleware();
   const store = configureStore({
-    reducer: { site, page, search, listings, listing },
+    reducer: { site, page, search, listings, listing, account },
     preloadedState: { site: initialSiteState(boot), page: { current: initialPage } },
     middleware: (getDefault) => getDefault({
       thunk: false,

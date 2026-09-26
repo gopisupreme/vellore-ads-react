@@ -25,6 +25,9 @@ import Advertise from './content/Advertise.jsx';
 import LocalServices from './content/LocalServices.jsx';
 import Countries from './content/Countries.jsx';
 import Error404 from './content/Error404.jsx';
+import Login, { RecruiterLogin } from './account/Login.jsx';
+import Register, { RecruiterRegister } from './account/Register.jsx';
+import ForgotPassword from './account/ForgotPassword.jsx';
 
 /** Anything without a React page is loaded from PHP. */
 function FromServer() {
@@ -64,6 +67,12 @@ const PAGES = {
   advertise: Advertise,
   'local-services': LocalServices,
   countries: Countries,
+  // sign-in pages (URLs under users/ and recruiter/, see ACCOUNT_PAGES in backend/app/index.php)
+  login: Login,
+  register: Register,
+  'forgot-password': ForgotPassword,
+  'recruiter-login': RecruiterLogin,
+  'recruiter-register': RecruiterRegister,
   error404: Error404,
   404: Error404,
 };

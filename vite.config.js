@@ -1,7 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { PHP_PREFIXES } from './src/config/site.js';
+import { ACCOUNT_PATH, PHP_PREFIXES } from './src/config/site.js';
 
 /*
  * The site keeps using the stylesheets and jQuery plugins the PHP site serves
@@ -33,24 +35,51 @@ function legacyAssets() {
   };
 }
 
+/*
+ * The build goes straight into the PHP site's app/ folder (backend/app/):
+ * index.html + static/. Only those two are replaced; index.php, .htaccess and
+ * config files there are source files and stay.
+ */
+const APP_DIR = 'backend/app';
+
+function cleanPreviousBuild() {
+  return {
+    name: 'vellore-clean-build',
+    apply: 'build',
+    buildStart() {
+      fs.rmSync(path.resolve(APP_DIR, 'static'), { recursive: true, force: true });
+      fs.rmSync(path.resolve(APP_DIR, 'index.html'), { force: true });
+    },
+  };
+}
+
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const backend = env.VITE_BACKEND_URL || 'http://localhost:8888';
-  // In development everything the PHP app owns is proxied to it (php -S or MAMP).
+  // backend/ on :8890 (npm start / npm run php, or MAMP): /api, /assets, sign-in, dashboards, forms
+  const backend = env.VITE_BACKEND_URL || 'http://localhost:8890';
   const phpPaths = `^/(${PHP_PREFIXES.map((p) => p.replace(/[.-]/g, '\\$&')).join('|')})(/|$|\\?)`;
   return {
     base: command === 'build' ? '/app/' : '/',
-    plugins: [react(), tailwindcss(), legacyAssets()],
+    plugins: [react(), tailwindcss(), legacyAssets(), cleanPreviousBuild()],
+    publicDir: false,
     build: {
-      outDir: 'dist',
+      outDir: APP_DIR,
       assetsDir: 'static',
-      emptyOutDir: true,
+      emptyOutDir: false,
       sourcemap: false,
     },
     server: {
-      port: 5173,
+      port: 8888,
+      strictPort: true,
+      // the PHP site is served by Apache, not Vite
+      watch: { ignored: ['**/backend/**'] },
       proxy: {
-        [phpPaths]: { target: backend, changeOrigin: false },
+        [phpPaths]: {
+          target: backend,
+          changeOrigin: false,
+          // sign-in pages are React: a page load of users/login etc. gets the app (form posts still go to PHP)
+          bypass: (req) => (req.method === 'GET' && ACCOUNT_PATH.test(req.url.split('?')[0]) ? '/index.html' : undefined),
+        },
         '/sw.js': { target: backend },
         '/favicon.ico': { target: backend },
       },

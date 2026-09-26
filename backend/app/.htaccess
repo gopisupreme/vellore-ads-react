@@ -1,0 +1,12 @@
+# <site>/app/: the React build (index.html, static/) and its server file (index.php).
+# Bundles have content hashes in their names, so they can be cached for a
+# year. index.html is only read by index.php; the settings are not for the browser.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|woff2?|png|jpe?g|svg|webp)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+<FilesMatch "^(index\.html|config(\.example)?\.php)$">
+    Require all denied
+</FilesMatch>
+Options -Indexes

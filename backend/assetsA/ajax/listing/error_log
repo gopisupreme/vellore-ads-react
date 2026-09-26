@@ -1,0 +1,14 @@
+[28-Apr-2018 11:09:34 Etc/GMT] PHP Parse error:  syntax error, unexpected end of file in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 120
+[28-Apr-2018 11:10:44 Etc/GMT] PHP Parse error:  syntax error, unexpected end of file in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 120
+[28-Apr-2018 11:12:36 Etc/GMT] PHP Parse error:  syntax error, unexpected end of file in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 120
+[28-Apr-2018 11:13:04 Etc/GMT] PHP Parse error:  syntax error, unexpected end of file in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 120
+[28-Apr-2018 11:14:03 Etc/GMT] PHP Parse error:  syntax error, unexpected end of file in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 120
+[28-Apr-2018 11:15:12 Etc/GMT] PHP Parse error:  syntax error, unexpected end of file in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 120
+[28-Apr-2018 11:24:48 Etc/GMT] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, boolean given in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 121
+[28-Apr-2018 11:25:27 Etc/GMT] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, boolean given in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 121
+[28-Apr-2018 11:27:44 Etc/GMT] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, boolean given in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 124
+[28-Apr-2018 11:27:46 Etc/GMT] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, boolean given in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 124
+[28-Apr-2018 11:27:54 Etc/GMT] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, boolean given in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 124
+[28-Apr-2018 11:41:37 Etc/GMT] PHP Notice:  Undefined variable: lastid in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 11
+[28-Apr-2018 11:43:34 Etc/GMT] PHP Notice:  Undefined variable: lastid in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 11
+[28-Apr-2018 11:44:51 Etc/GMT] PHP Notice:  Undefined variable: lastid in /home/velloreads/public_html/connect/ajax/listing/get-all-listing.php on line 11

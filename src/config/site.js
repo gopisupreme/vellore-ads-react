@@ -26,6 +26,12 @@ export const PHP_PREFIXES = [
 const phpPrefixSet = new Set(PHP_PREFIXES.map((p) => p.toLowerCase()));
 
 /**
+ * Sign-in pages rendered by React inside PHP sections (users/, recruiter/).
+ * Keep in step with ACCOUNT_PAGES in backend/app/index.php and backend/.htaccess.
+ */
+export const ACCOUNT_PATH = /^\/(users\/(login|register|forgot_pass|recruiter_login|recruiter_register)|recruiter\/(login|register))\/?$/i;
+
+/**
  * True when the React app renders `pathname` itself; false when the browser
  * should load it from PHP (legacy pages, dashboards, payment flows, files).
  *
@@ -40,6 +46,7 @@ export function isSpaPath(pathname, { reactPages = [], locations = [] } = {}) {
     return false;
   }
   if (segs.length === 0) return true;
+  if (ACCOUNT_PATH.test(pathname)) return true;
   if (phpPrefixSet.has(segs[0].toLowerCase())) return false;
   if (segs.some((s) => /\.(php|html?|xml|txt|js|css|png|jpe?g|gif|webp|svg|ico|pdf|json)$/i.test(s))) return false;
   if (segs[0] === 'blog') return segs.length >= 3;

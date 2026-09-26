@@ -25,7 +25,7 @@ const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => {
   // weather.js fails the same way on the PHP site; errors on PHP pages are not ours
-  if (!/notificationElement|weather/.test(e.message) && !/users\/login/.test(page.url())) errors.push(`${e.message} @ ${page.url()}`);
+  if (!/notificationElement|weather/.test(e.message) && !/post-free-ads/.test(page.url())) errors.push(`${e.message} @ ${page.url()}`);
 });
 await page.route(/(facebook|googlesyndication|googletagmanager|redbackai|openweathermap|youtube)/, (r) => r.abort());
 const posted = [];
@@ -153,6 +153,10 @@ m = await marker();
 await page.goto(`${BASE}/about-us`, { waitUntil: 'networkidle' });
 m = await marker();
 await Promise.all([page.waitForURL(/users\/login/), page.locator('a[href$="users/login"]').first().click()]);
+await page.waitForSelector('#login_email');
+check('sign-in link opens the React login page', (await stillSpa(m)) && await page.locator('#root .log-in-pop').count() === 1, page.url());
+m = await marker();
+await Promise.all([page.waitForURL(/post-free-ads/), page.locator('a[href$="post-free-ads"]').first().click()]);
 await page.waitForLoadState('networkidle');
 check('links to PHP pages load from PHP', !(await stillSpa(m)) && await page.locator('#root').count() === 0, page.url());
 

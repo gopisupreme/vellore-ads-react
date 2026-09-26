@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "React front end for velloreads.com (backend: the vellore-ads CodeIgniter project)",
   "scripts": {
+    "start": "node tools/start.mjs",
     "dev": "vite",
-    "php": "php -S localhost:8888 -t ../vellore-ads tools/php-dev-router.php",
+    "php": "node tools/start.mjs --backend-only",
     "build": "vite build",
+    "watch": "vite build --watch",
     "preview": "vite preview",
-    "deploy:local": "node tools/copy-build.mjs ../vellore-ads/app",
     "lint": "eslint src tools",
     "test:compare": "node tools/compare.mjs / /Vellore/Hospital /about-us",
     "test:behaviour": "node tools/behaviour-test.mjs"

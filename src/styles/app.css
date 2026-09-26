@@ -13,7 +13,7 @@
  *    (unlayered) CSS by specificity and order, like a hand-written rule would
  */
 @import 'tailwindcss/theme.css' layer(theme) prefix(tw);
-@import 'tailwindcss/utilities.css' prefix(tw);
+@import 'tailwindcss/utilities.css' prefix(tw) source(none);
 
 @source '../../src';
 

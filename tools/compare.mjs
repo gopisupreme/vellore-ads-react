@@ -6,7 +6,7 @@
  *   LEGACY=http://localhost:8889 REACT=http://localhost:8888 node tools/compare.mjs /Vellore/Hospital [/about-us ...]
  *   options: --mobile (390px viewport)  --out <dir> (screenshots + diffs)  --show <n> (DOM differences to print)
  *
- * The legacy server is the same PHP project started with REACT_FRONTEND=false.
+ * The legacy server is the PHP site with its original .htaccess (no React).
  */
 import fs from 'node:fs';
 import path from 'node:path';
