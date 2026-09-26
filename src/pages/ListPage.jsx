@@ -1,13 +1,13 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect } from 'react';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useSite } from '../context.js';
 import { BASE, strReplace, urlTitle, ucfirst } from '../lib/php.js';
-import { postForm } from '../lib/api.js';
+import { useInstanceKey } from '../store/hooks.js';
+import { feedNextPage, feedReset, feedStopped, selectFeed } from '../store/listings.js';
 import HeaderMenu from '../components/HeaderMenu.jsx';
 import AdsCarousel from '../components/AdsCarousel.jsx';
 import ListingRow from '../components/ListingRow.jsx';
 import pageCss from './ListPage.css?raw';
-
-const LIMIT = 10;
 
 /** The grey "loading" blocks list.php showed while results load (lazzy_loader). */
 function Placeholders({ count }) {
@@ -23,71 +23,38 @@ function Placeholders({ count }) {
 const checked = (cls) => [...document.querySelectorAll(`.${cls}:checked`)].map((el) => el.value).join(',');
 
 /**
- * Results for the list page, loaded 10 at a time from api/listings (same
- * query as pages/getCategoryList): more load when the visitor scrolls, and the
- * list reloads when a Features / Ratings filter is clicked.
+ * Results for the list page (state and requests in store/listings.js): more
+ * load when the visitor scrolls, and the list reloads when a Features /
+ * Ratings filter is clicked.
  */
 function useListingFeed(catee, locName) {
-  const [rows, setRows] = useState([]);
-  const [message, setMessage] = useState('loading');
-  const state = useRef({ start: 0, busy: true, seq: 0, count: 0 });
+  const key = useInstanceKey();
+  const dispatch = useDispatch();
+  const store = useStore();
+  const { rows, message } = useSelector(selectFeed(key));
 
   useEffect(() => {
-    const s = state.current;
-    const load = (start) => {
-      const seq = ++s.seq;
-      postForm('listings', {
-        categoryName: catee, cityName: locName, limit: LIMIT, start,
-        subcate: checked('mycheckbox'), feas: checked('trusted'), ratings: checked('rating'),
-      }).then((batch) => {
-        if (seq !== s.seq) return; // a newer filter/scroll request replaced this one
-        if (batch.length === 0) {
-          // list.php stopped loading here; with no results at all it said so,
-          // otherwise the loading blocks stayed under the last results
-          if (start === 0) {
-            s.count = 0;
-            setRows([]);
-          }
-          if (s.count === 0) setMessage('empty');
-          s.busy = true;
-          return;
-        }
-        s.count = start === 0 ? batch.length : s.count + batch.length;
-        setRows((prev) => (start === 0 ? batch : [...prev, ...batch]));
-        setMessage('');
-        s.busy = false;
-      }).catch(() => {});
-    };
-
+    const params = () => ({
+      categoryName: catee, cityName: locName,
+      subcate: checked('mycheckbox'), feas: checked('trusted'), ratings: checked('rating'),
+    });
     const $ = window.jQuery;
-    const onFilter = () => {
-      s.start = 0;
-      s.count = 0;
-      s.busy = true;
-      setRows([]);
-      setMessage('loading');
-      load(0);
-    };
+    const onFilter = () => dispatch(feedReset(key, params()));
     const onScroll = () => {
       const box = document.getElementById('load_data');
-      if (!box || s.busy) return;
-      if ($(window).scrollTop() + $(window).height() > $(box).height()) {
-        setMessage('loading');
-        s.busy = true;
-        s.start += LIMIT;
-        const start = s.start;
-        setTimeout(() => load(start), 1000);
-      }
+      const feed = store.getState().listings.feeds[key];
+      if (!box || !feed || feed.busy) return;
+      if ($(window).scrollTop() + $(window).height() > $(box).height()) dispatch(feedNextPage(key, params()));
     };
     $(document).on('click.listfeed', '.select_filter', onFilter);
     $(window).on('scroll.listfeed', onScroll);
-    load(0);
+    dispatch(feedReset(key, params()));
     return () => {
-      s.seq++;
+      dispatch(feedStopped(key));
       $(document).off('click.listfeed');
       $(window).off('scroll.listfeed');
     };
-  }, [catee, locName]);
+  }, [catee, locName, key, dispatch, store]);
 
   return { rows, message };
 }

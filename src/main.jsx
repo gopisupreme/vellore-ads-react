@@ -1,8 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import App from './App.jsx';
 import { getJSON } from './lib/api.js';
+import { createStore } from './store/index.js';
 import { installBehaviors } from './legacy/behaviors.js';
 import { installForms } from './legacy/forms.js';
 import './styles/app.css';
@@ -19,14 +21,18 @@ async function start() {
     ? { resolved: embedded.resolved, data: embedded.data, path: window.location.pathname + window.location.search }
     : null;
 
+  const store = createStore({ boot, initialPage: initial });
+
   installBehaviors();
   installForms();
 
   createRoot(document.getElementById('root')).render(
     <StrictMode>
-      <BrowserRouter>
-        <App boot={boot} initial={initial} />
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </Provider>
     </StrictMode>,
   );
 }

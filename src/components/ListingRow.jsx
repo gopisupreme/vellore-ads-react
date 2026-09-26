@@ -118,7 +118,7 @@ export default function ListingRow({ l, cityName, companyName }) {
             <li><a href={link}><i className="fa fa-star-o" aria-hidden="true"></i> Write Review</a> </li>
             {l.l_email && <li><a href={`mailto:${l.l_email}`}><i className="fa fa-commenting-o" aria-hidden="true"></i> Send Mail</a> </li>}
             {whatsapp && (
-              <li><a href={`https://api.whatsapp.com/send?phone=91${whatsapp}`} className="whatsapp_listing" target="_blank"><i className="fa fa-commenting-o" aria-hidden="true"></i> Whatsapp</a> </li>
+              <li><a href={`https://api.whatsapp.com/send?phone=91${whatsapp}`} className="whatsapp_listing tw:bg-[#34af23]! tw:border-none! tw:text-white!" target="_blank"><i className="fa fa-commenting-o" aria-hidden="true"></i> Whatsapp</a> </li>
             )}
             {callnow && <li><a className="call_now" href={`tel:+91${callnow}`}><i className="fa fa-phone" aria-hidden="true"></i> Call Now</a> </li>}
           </ul>
@@ -129,7 +129,7 @@ export default function ListingRow({ l, cityName, companyName }) {
             <li><a href={link}><i className="fa fa-star-o" aria-hidden="true"></i> </a> Write Review</li>
             {l.l_email && <li><a href={`mailto:${l.l_email}`}><i className="fa fa-commenting-o" aria-hidden="true"></i> </a> Send Mail</li>}
             {whatsapp && (
-              <li className="whatsapp"><a href={`https://api.whatsapp.com/send?phone=91${whatsapp}`} className="whatsapp_listing" target="_blank"><i className="fa fa-commenting-o" aria-hidden="true"></i> </a> Whatsapp</li>
+              <li className="whatsapp"><a href={`https://api.whatsapp.com/send?phone=91${whatsapp}`} className="whatsapp_listing tw:bg-[#34af23]! tw:border-none! tw:text-white!" target="_blank"><i className="fa fa-commenting-o" aria-hidden="true"></i> </a> Whatsapp</li>
             )}
             {callnow && <li className="call_now"><a href={`tel:+91${callnow}`}><i className="fa fa-phone" aria-hidden="true"></i></a>  Call Now</li>}
           </ul>
@@ -168,7 +168,7 @@ export default function ListingRow({ l, cityName, companyName }) {
             <ul>
               {l.l_email && <li><a href={`mailto:${l.l_email}`}><i className="fa fa-commenting-o" aria-hidden="true"></i> Send Mail</a> </li>}
               {whatsapp && (
-                <li><a href={`https://api.whatsapp.com/send?phone=91${whatsapp}`} className="whatsapp_listing" target="_blank"><i className="fa fa-commenting-o" aria-hidden="true"></i> Whatsapp</a> </li>
+                <li><a href={`https://api.whatsapp.com/send?phone=91${whatsapp}`} className="whatsapp_listing tw:bg-[#34af23]! tw:border-none! tw:text-white!" target="_blank"><i className="fa fa-commenting-o" aria-hidden="true"></i> Whatsapp</a> </li>
               )}
               {callnow && <li><a href={`tel:+91${callnow}`} className="quote"><i className="fa fa-phone" aria-hidden="true"></i> Call Now</a> </li>}
             </ul>

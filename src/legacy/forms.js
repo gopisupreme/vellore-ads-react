@@ -9,6 +9,8 @@
  *  - values are URL-encoded (a "&" in a message no longer truncates it)
  *  - the review form sends the star the visitor picked (the original always sent 5)
  */
+import axios from 'axios';
+
 const ENDPOINT = '/Manage_Ajax/';
 const $ = (...a) => window.jQuery(...a);
 
@@ -69,14 +71,13 @@ function contactForm({ f, action, fields, msgSelector, onDone, skipEmail }) {
 }
 
 function post(action, fields) {
-  return fetch(ENDPOINT + action, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
-    body: new URLSearchParams(fields).toString(),
-  })
-    .then((r) => r.text())
-    .then((t) => t.trim())
+  return axios
+    .post(ENDPOINT + action, new URLSearchParams(fields).toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
+      responseType: 'text',
+      validateStatus: () => true,
+    })
+    .then((r) => String(r.data ?? '').trim())
     .catch(() => '');
 }
 

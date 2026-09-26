@@ -2,7 +2,6 @@ import { useSite } from '../context.js';
 import { BASE, strReplace } from '../lib/php.js';
 import { cssText } from '../lib/dom.js';
 import { useSuggestions, TitleSuggestions, CitySuggestions, useSearchSubmit } from './search.jsx';
-import '../styles/header-menu.css';
 
 /**
  * The sticky top menu (views/templates/header-index.php): logo, category mega
@@ -460,7 +459,7 @@ export default function HeaderMenu({ fromCity = false }) {
         </div>
       </div>
     </div>
-    <div className="mobile_business_ad">
+    <div className="mobile_business_ad tw:hidden tw:[@media(max-width:762px)]:flex tw:justify-evenly tw:items-center">
       <p>
         <a className="mbdp" href="https://velloreads.com/users/register" ref={cssText("background-color:blue !important;")}>
           Sign Up

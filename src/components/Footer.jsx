@@ -2,7 +2,6 @@ import { Fragment, useEffect } from 'react';
 import { useSite } from '../context.js';
 import { BASE, ucfirst, strReplace, phpDate, urlTitle } from '../lib/php.js';
 import { inline } from '../lib/dom.js';
-import '../styles/footer.css';
 
 /**
  * Site footer (views/templates/footer.php): app promo, link columns, city and
@@ -1242,7 +1241,7 @@ export default function Footer() {
                   </div>
                 </div>
               </div>
-              <div data-section="section" className="notshow">
+              <div data-section="section" className="notshow tw:[@media(max-width:600px)]:hidden">
                 <div className="container">
                   <div className="row">
                     <div className="col-sm-12 col-md-12 col-xs-12 cities_districts">

@@ -3,4 +3,21 @@
  * loaded in index.html exactly as templates/header.php loads them. Styles that
  * a PHP view printed inline live next to that page and are only present while
  * the page is shown.
+ *
+ * Tailwind is for styling the React markup. It is set up to sit alongside
+ * Bootstrap/Materialize without changing them:
+ *  - no preflight (its reset would restyle every legacy element)
+ *  - every utility is prefixed: `tw:flex`, `tw:md:hidden`, `tw:text-white!`,
+ *    so names like `container`, `hidden` or `collapse` keep their Bootstrap meaning
+ *  - utilities are not in a cascade layer, so they compete with the legacy
+ *    (unlayered) CSS by specificity and order, like a hand-written rule would
  */
+@import 'tailwindcss/theme.css' layer(theme) prefix(tw);
+@import 'tailwindcss/utilities.css' prefix(tw);
+
+@source '../../src';
+
+/* inline <style> block from templates/footer.php */
+img {
+  pointer-events: none;
+}

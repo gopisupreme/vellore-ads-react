@@ -1,8 +1,10 @@
 import { Fragment, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useSite } from '../../context.js';
 import { BASE, ucfirst, numberFormat, phpDate, shorten, starClasses } from '../../lib/php.js';
 import { inline, cssText } from '../../lib/dom.js';
-import { getJSON, postForm } from '../../lib/api.js';
+import { useInstanceKey } from '../../store/hooks.js';
+import { likeRequested, reviewsCleared, reviewsRequested, selectMoreReviews } from '../../store/listing.js';
 import HeaderMenu from '../../components/HeaderMenu.jsx';
 import AdsCarousel from '../../components/AdsCarousel.jsx';
 import { CustomAboutSections, CustomBlog, CustomOnlineOrder, CustomAttractions } from './CustomSections.jsx';
@@ -89,14 +91,15 @@ export default function ListingDetails({ resolved, data }) {
   const liked = loggedIn && data.liked;
 
   // "Load More Results": the next 5 reviews each time (pages/getReviewList)
+  const dispatch = useDispatch();
+  const reviewsKey = useInstanceKey();
   const [rowNo, setRowNo] = useState(5);
-  const [more, setMore] = useState([]);
+  const more = useSelector(selectMoreReviews(reviewsKey));
+  useEffect(() => () => dispatch(reviewsCleared(reviewsKey)), [dispatch, reviewsKey]);
   const loadmore = () => {
     const offset = rowNo;
     setRowNo(offset + 5);
-    getJSON('reviews', { listing: l_row.l_id, offset }).then((rows) => {
-      setMore((prev) => [...prev, rows.length ? { rows } : { none: true }]);
-    });
+    dispatch(reviewsRequested(reviewsKey, l_row.l_id, offset));
   };
 
   const like = () => {
@@ -104,7 +107,7 @@ export default function ListingDetails({ resolved, data }) {
       alert('Please login to like');
       return;
     }
-    postForm('like', { listing: l_row.l_id }).then((r) => alert(r.message)).catch(() => {});
+    dispatch(likeRequested(l_row.l_id));
   };
   const alreadyLiked = () => alert('You are already liked this ads');
 

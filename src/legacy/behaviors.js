@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 /**
  * Site-wide behaviour of assets/js/custom.js and the inline scripts in
  * templates/footer.php, ported for React-rendered markup.
@@ -167,7 +169,7 @@ function registerServiceWorker() {
 
 /** footer.php: visitor counter (one count per 2 hours, cookie-based on the server). */
 export function countVisit() {
-  fetch('/pages/counter', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+  axios.post('/pages/counter', undefined, { responseType: 'text' }).catch(() => {});
 }
 
 /** footer.php: turn .youtube placeholders into thumbnails that load the video on click. */

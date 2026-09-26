@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { PHP_PREFIXES } from './src/config/site.js';
 
 /*
@@ -39,7 +40,7 @@ export default defineConfig(({ command, mode }) => {
   const phpPaths = `^/(${PHP_PREFIXES.map((p) => p.replace(/[.-]/g, '\\$&')).join('|')})(/|$|\\?)`;
   return {
     base: command === 'build' ? '/app/' : '/',
-    plugins: [react(), legacyAssets()],
+    plugins: [react(), tailwindcss(), legacyAssets()],
     build: {
       outDir: 'dist',
       assetsDir: 'static',

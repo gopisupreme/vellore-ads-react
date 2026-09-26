@@ -1,26 +1,30 @@
-import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getJSON, postForm } from '../lib/api.js';
+import { useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { BASE, urlTitle } from '../lib/php.js';
-import { isSpaPath } from '../config/site.js';
 import { useSite } from '../context.js';
+import { useInstanceKey } from '../store/hooks.js';
+import { searchSubmitted, selectSuggestions, suggestionsCleared, suggestRequested } from '../store/search.js';
 
 /**
  * Autocomplete for a search input: the suggestions pages/searchHeaderTitle,
  * searchIndexTitle, searchHeaderArea and searchIndexArea returned as <li> HTML.
  */
 export function useSuggestions(type) {
-  const [items, setItems] = useState([]);
+  const key = useInstanceKey();
+  const dispatch = useDispatch();
+  const items = useSelector(selectSuggestions(key));
   const box = useRef(null);
-  const seq = useRef(0);
+  const answered = useRef(false);
+
+  useEffect(() => () => dispatch(suggestionsCleared({ key })), [dispatch, key]);
+  // the box opens each time an answer arrives
+  useEffect(() => {
+    if (answered.current && box.current) box.current.style.display = 'block';
+  }, [items]);
+
   const onKeyUp = (e) => {
-    const q = e.currentTarget.value;
-    const n = ++seq.current;
-    getJSON('suggest', { type, q }).then((rows) => {
-      if (n !== seq.current) return; // a newer keystroke already answered
-      setItems(rows);
-      if (box.current) box.current.style.display = 'block';
-    }).catch(() => {});
+    answered.current = true;
+    dispatch(suggestRequested(key, type, e.currentTarget.value));
   };
   const hide = () => {
     if (box.current) box.current.style.display = 'none';
@@ -55,16 +59,9 @@ export function CitySuggestions({ items, onPick }) {
  * the city/category/listing URL and stores the choice in the session.
  */
 export function useSearchSubmit() {
-  const navigate = useNavigate();
-  const { reactPages, locations } = useSite();
+  const dispatch = useDispatch();
   return (form) => {
     const fd = new FormData(form);
-    postForm('search', { categoryNm: fd.get('categoryNm') || '', cityNm: fd.get('cityNm') || '' })
-      .then(({ redirect }) => {
-        const url = new URL(redirect, window.location.origin);
-        if (isSpaPath(url.pathname, { reactPages, locations })) navigate(url.pathname);
-        else window.location.assign(url.pathname);
-      })
-      .catch(() => form.submit());
+    dispatch(searchSubmitted({ categoryNm: fd.get('categoryNm') || '', cityNm: fd.get('cityNm') || '' }, form));
   };
 }
