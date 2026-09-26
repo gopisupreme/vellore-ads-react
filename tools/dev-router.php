@@ -29,8 +29,8 @@ if ($rel === '') {
 		return true;
 	}
 	$target = "$root/index.php";
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && preg_match('#^(users/(login|register|forgot_pass|recruiter_login|recruiter_register)|recruiter/(login|register))/?$#i', $rel)) {
-	$target = "$root/app/index.php"; // React sign-in pages
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && preg_match('#^(users(/(?!api_).*)?|recruiter/(login|register)/?)$#i', $rel)) {
+	$target = "$root/app/index.php"; // React pages of users/ (see backend/.htaccess)
 } elseif (preg_match($phpSections, $rel)) {
 	$target = "$root/index.php";
 } else {

@@ -34,3 +34,20 @@ export const postForm = (endpoint, fields) =>
 
 /** The page a URL shows, its SEO tags, its data and the visitor's session. */
 export const fetchPageState = (pathWithQuery) => getJSON('state', { path: pathWithQuery });
+
+/*
+ * The React pages of the signed-in areas talk to the site's CodeIgniter
+ * controllers, marked with this header (backend/application/helpers/react_helper.php).
+ */
+const APP_HEADERS = { 'X-Vellore-App': '1' };
+
+/** GET <section>/api_data/<page>/<args>: a page's data, or { redirect }. */
+export const getAppData = (url) => request({ url, headers: APP_HEADERS });
+
+/**
+ * Submits a form (FormData, files included) to its existing PHP handler:
+ * { ok: true, redirect } or { ok: false, errors, messages }.
+ */
+export const submitAppForm = (action, formData) =>
+  request({ url: action, method: 'POST', headers: APP_HEADERS, data: formData });
+

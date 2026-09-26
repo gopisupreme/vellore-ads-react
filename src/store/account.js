@@ -1,8 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import { postForm } from '../lib/api.js';
-import { isSpaPath } from '../config/site.js';
-import { navigateTo } from './navigation.js';
+import { goTo } from './navigation.js';
 
 /**
  * The sign-in forms (login, register, forgot password, recruiter login and
@@ -42,12 +41,9 @@ function* submit({ payload: { form, action, fields } }) {
   try {
     const result = yield call(postForm, action, fields);
     if (result.ok && result.redirect) {
-      const { reactPages, locations } = yield select((state) => state.site.boot);
-      const url = new URL(result.redirect, window.location.origin);
       yield put(accountCleared({ form }));
-      // dashboards are PHP pages: a full load; the login page after registering is React
-      if (url.origin === window.location.origin && isSpaPath(url.pathname, { reactPages, locations })) navigateTo(url.pathname + url.search);
-      else window.location.assign(url.href);
+      // dashboards are PHP pages or React app pages; the login page after registering is React
+      goTo(result.redirect, yield select((state) => state.site.boot));
       return;
     }
     yield put(accountAnswered({ form, errors: result.errors ?? [], message: result.message ?? null }));

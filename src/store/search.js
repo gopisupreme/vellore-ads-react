@@ -50,9 +50,9 @@ function* fetchSuggestions({ payload: { key, type, q } }) {
 function* submitSearch({ payload: { categoryNm, cityNm }, meta: { form } }) {
   try {
     const { redirect } = yield call(postForm, 'search', { categoryNm, cityNm });
-    const { reactPages, locations } = yield select((state) => state.site.boot);
+    const boot = yield select((state) => state.site.boot);
     const url = new URL(redirect, window.location.origin);
-    if (isSpaPath(url.pathname, { reactPages, locations })) navigateTo(url.pathname);
+    if (isSpaPath(url.pathname, boot)) navigateTo(url.pathname);
     else window.location.assign(url.pathname);
   } catch {
     form.submit();

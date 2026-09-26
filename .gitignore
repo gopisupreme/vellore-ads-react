@@ -61,3 +61,6 @@ Thumbs.db
 !/backend/application/logs/index.html
 /backend/application/cache/*
 !/backend/application/cache/index.html
+
+# local test scripts that sign in with a real account (kept out of git)
+/tools/.*-test.mjs

@@ -17,7 +17,7 @@ export default function App() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const pathWithQuery = location.pathname + location.search;
-  const { reactPages, locations } = useSite();
+  const { reactPages, locations, appPages } = useSite();
 
   // the page on screen; it is only replaced once the next page's data has arrived
   const page = useSelector(selectPage);
@@ -64,13 +64,13 @@ export default function App() {
       const url = new URL(a.href, window.location.href);
       if (url.origin !== window.location.origin) return;
       if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
-      if (!isSpaPath(url.pathname, { reactPages, locations })) return;
+      if (!isSpaPath(url.pathname, { reactPages, locations, appPages })) return;
       e.preventDefault();
       navigate(url.pathname + url.search + url.hash);
     };
     document.addEventListener('click', onClick);
     return () => document.removeEventListener('click', onClick);
-  }, [navigate, reactPages, locations]);
+  }, [navigate, reactPages, locations, appPages]);
 
   const Page = page ? pageFor(page.resolved.view) : null;
 

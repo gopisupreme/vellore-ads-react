@@ -28,6 +28,20 @@ import Error404 from './content/Error404.jsx';
 import Login, { RecruiterLogin } from './account/Login.jsx';
 import Register, { RecruiterRegister } from './account/Register.jsx';
 import ForgotPassword from './account/ForgotPassword.jsx';
+import OwnerDashboard from './app/users/Dashboard.jsx';
+import { AllListings, AllPosts, AllMatrimony, AllSpa, AllEnquiries } from './app/users/ItemLists.jsx';
+import {
+  AddListing, EditListing, AddMatrimony, EditMatrimony, AddSpa, EditSpa, AddPost, EditPost,
+} from './app/users/ListingForm.jsx';
+import { ListingReviews, PostReviews, MatrimonyReviews, SpaReviews } from './app/users/Reviews.jsx';
+import { Profile, ProfileEdit } from './app/users/Profile.jsx';
+import ClaimBusiness from './app/users/ClaimBusiness.jsx';
+import OwnerJobs from './app/users/Jobs.jsx';
+import { AllOrders, ViewOrder } from './app/users/Orders.jsx';
+import { AllProducts, AddProduct, EditProduct } from './app/users/Products.jsx';
+import {
+  AllCategories, AddCategory, EditCategory, AllBrands, AddBrand, EditBrand, AllSubCategories, AddSubCategory, EditSubCategory,
+} from './app/users/Taxonomy.jsx';
 
 /** Anything without a React page is loaded from PHP. */
 function FromServer() {
@@ -73,6 +87,43 @@ const PAGES = {
   'forgot-password': ForgotPassword,
   'recruiter-login': RecruiterLogin,
   'recruiter-register': RecruiterRegister,
+  // listing owner area (backend/app/pages.json: users)
+  'users/dashboard': OwnerDashboard,
+  'users/db_all_listing': AllListings,
+  'users/db_all_post': AllPosts,
+  'users/db_all_matrimony': AllMatrimony,
+  'users/db_all_spa': AllSpa,
+  'users/db_all_enquiry': AllEnquiries,
+  'users/db_listing_add': AddListing,
+  'users/db_listing_edit': EditListing,
+  'users/db_matrimony_add': AddMatrimony,
+  'users/db_matrimony_edit': EditMatrimony,
+  'users/db_spa_add': AddSpa,
+  'users/db_spa_edit': EditSpa,
+  'users/db_post_add': AddPost,
+  'users/db_post_edit': EditPost,
+  'users/db_review': ListingReviews,
+  'users/db_post_review': PostReviews,
+  'users/db_matrimony_review': MatrimonyReviews,
+  'users/db_spa_review': SpaReviews,
+  'users/profile': Profile,
+  'users/profile_edit': ProfileEdit,
+  'users/claim_business': ClaimBusiness,
+  'users/db_jobs': OwnerJobs,
+  'users/db_all_orders': AllOrders,
+  'users/view_order': ViewOrder,
+  'users/all_product': AllProducts,
+  'users/add_product': AddProduct,
+  'users/edit_product': EditProduct,
+  'users/all_categories': AllCategories,
+  'users/add_categories': AddCategory,
+  'users/edit_categories': EditCategory,
+  'users/all_brand': AllBrands,
+  'users/add_brand': AddBrand,
+  'users/edit_brand': EditBrand,
+  'users/all_sub_categories': AllSubCategories,
+  'users/add_sub_categories': AddSubCategory,
+  'users/edit_sub_categories': EditSubCategory,
   error404: Error404,
   404: Error404,
 };

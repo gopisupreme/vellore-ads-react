@@ -6,7 +6,7 @@
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
 </IfModule>
-<FilesMatch "^(index\.html|config(\.example)?\.php)$">
+<FilesMatch "^(index\.html|pages\.json|config(\.example)?\.php)$">
     Require all denied
 </FilesMatch>
 Options -Indexes

@@ -1,6 +1,10 @@
 <?php
+require_once APPPATH . 'core/React_pages.php';
+
 class Users extends CI_Controller
 {
+	use React_pages; // api_data/<page>: JSON for the React pages of the listing owner area (the _data_* methods)
+
 	public function __construct()
 	{
 		parent::__construct();
@@ -336,8 +340,15 @@ EOD;
 
 	public function db_listing_delete()
 	{
-
+		// only a signed-in owner may delete, and only their own listing (there was no check at all)
+		if (!$this->session->userdata('login')) {
+			redirect('users/login');
+		}
 		$listingId = $this->uri->segment(3);
+		if (!$this->_owned('listing', $listingId)) {
+			$this->session->set_flashdata('user_listed', '<div class="alert alert-danger">You can only delete your own listings.</div>');
+			redirect('users/db_all_listing');
+		}
 		$this->db->where('l_id', $listingId);
 		$this->db->delete('listing');
 		$this->session->set_flashdata('list', '<div class="alert alert-success">Listing Deleted Successfully.</div>');
@@ -378,11 +389,11 @@ EOD;
 		$postData = $this->input->post();
 		if (isset($postData['do']) && $postData['do'] == "editRow") {
 			$updateData = array('r_message' => trim($postData['message']));
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->update('reviews', $updateData);
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Updated Successfully.</div>');
 		} elseif (isset($postData['do']) && $postData['do'] == "deleteRow") {
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->delete('reviews');
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Deleted Successfully.</div>');
 		}
@@ -419,7 +430,9 @@ EOD;
 		$data['h_rows'] = $this->User_Model->getuserInfo($userId);
 		$listingId = $this->uri->segment(3);
 		$postData = $this->input->post();
-		$pageType = $postData['do'];
+		// always the signed-in user's own profile (the form's hidden uid decided whose account was changed)
+		$postData['uid'] = $userId;
+		$pageType = isset($postData['do']) ? $postData['do'] : null;
 
 		if (isset($pageType) && $pageType == "editRow") {
 			// $this->form_validation->set_rules('fullname', 'Name', 'required');
@@ -449,7 +462,7 @@ EOD;
 					redirect('users/profile_edit', $data);
 				}
 				$userData = $this->db->query("SELECT * FROM `users` WHERE `u_id` = '" . $userId . "'")->row_array();
-				if ($userData['u_img'] != 'defauld.png') {
+				if ($userData['u_img'] != '' && $userData['u_img'] != 'default.png') { // never the shared default photo
 					$path = "assets/uploads/" . $userData['u_img'];
 					unlink($path);
 				}
@@ -1284,6 +1297,12 @@ EOD;
 	{
 		if ((!$this->session->userdata('login')) && ($this->session->userdata('type') != "listing")) {
 			redirect('users/login');
+		}
+		// editing: only the signed-in owner's own item (any signed-in user could change any item)
+		$editId = $this->input->post('listingId') ? $this->input->post('listingId') : $this->uri->segment(3);
+		if ($editId && !$this->_owned('listing', $editId)) {
+			$this->session->set_flashdata('user_listed', '<div class="alert alert-danger">You can only edit your own listings.</div>');
+			redirect('users/db_all_listing');
 		}
 		$userId = $this->session->userdata('uid');
 		$listingId = $this->uri->segment(3);
@@ -2124,11 +2143,9 @@ EOD;
 			#send to user
 			$this->Company_Model->sendEmail($to, $toName, $from, $fromName, $subject, $body, $signature);
 			$this->session->set_flashdata('claim_business', '<div class="alert alert-success">Claimed business listing OTP send to your registered email address successfully!</div>');
-
-			// redirect('users/claim-business2', $data);
-			$this->load->view('templates/header', $data);
-			$this->load->view('users/claim-business2', $data);
-			$this->load->view('templates/footer', $data);
+			// the OTP step: users/claim_business shows it while the session holds the business being claimed
+			$this->session->set_userdata('claim_title', $title);
+			redirect('users/claim_business');
 		}
 	}
 
@@ -2171,18 +2188,16 @@ EOD;
 		} else {
 			$checkOtp = $postData['otp'];
 			$getListing = $this->db->query("SELECT * FROM `listing` WHERE `l_title` = '" . $postData['title'] . "'")->row_array();
-			$getOtp = $getListing['l_otp'];
-			if ($getOtp == $checkOtp) {
+			$getOtp = isset($getListing['l_otp']) ? trim((string) $getListing['l_otp']) : '';
+			// a real OTP, for the business chosen in step 1 (an empty OTP used to match listings that never had one)
+			if ($getOtp !== '' && $getOtp === trim((string) $checkOtp) && $postData['title'] === $this->session->userdata('claim_title')) {
 				$this->User_Model->claimBusiness($postData, $userId);
 				$this->session->set_flashdata('claim_business', '<div class="alert alert-success">Claimed Business Listing Successfully</div>');
-				$this->load->view('templates/header', $data);
-				$this->load->view('users/dashboard', $data);
-				$this->load->view('templates/footer', $data);
+				$this->session->unset_userdata('claim_title');
+				redirect('users/dashboard');
 			} else {
 				$this->session->set_flashdata('claim_business', '<div class="alert alert-danger">Claimed Business Incorrect OTP!</div>');
-				$this->load->view('templates/header', $data);
-				$this->load->view('users/claim-business2', $data);
-				$this->load->view('templates/footer', $data);
+				redirect('users/claim_business');
 			}
 
 		}
@@ -2307,7 +2322,7 @@ EOD;
 		$action = $this->uri->segment(4);
 
 		if ($action == "delete") {
-			$this->db->where('order_id', $listingId);
+			$this->db->where(array('order_id' => $listingId, 'list_userid' => $userId)); // only the owner's own orders
 			$this->db->delete('rb_order_master_data');
 			$this->session->set_flashdata('user_listed', '<div class="alert alert-success">Order Deleted Successfully.</div>');
 			redirect('users/db_all_orders', $data);
@@ -2579,6 +2594,11 @@ EOD;
 		} elseif ($pageType == "updateC") {
 			$data['editId'] = $this->uri->segment(3);
 			$listingId = $this->uri->segment(3);
+			// only the owner's own product (the update also made the editor its owner)
+			if ($this->db->where(array('p_id' => $listingId, 'p_userid' => $userId))->count_all_results('product') == 0) {
+				$this->session->set_flashdata('product_listed', '<div class="alert alert-danger">You can only edit your own products.</div>');
+				redirect('users/all_product');
+			}
 			$data['h_rows'] = $this->User_Model->getuserInfo($userId);
 			$data["listingData"] = $this->User_Model->getUserListingData($listingId);
 			$this->form_validation->set_rules('product', 'Product', 'required');
@@ -2798,7 +2818,7 @@ EOD;
 		$action = $this->uri->segment(4);
 
 		if ($action == "delete") {
-			$this->db->where('p_id', $listingId);
+			$this->db->where(array('p_id' => $listingId, 'p_userid' => $userId)); // only the owner's own product
 			$this->db->delete('product');
 			$this->session->set_flashdata('product_listed', '<div class="alert alert-success">Product Deleted Successfully.</div>');
 			redirect('users/all_product', $data);
@@ -2892,15 +2912,15 @@ EOD;
 		$postData = $this->input->post();
 		if (isset($postData['do']) && $postData['do'] == "editRow") {
 			$updateData = array('r_message' => trim($postData['message']));
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->update('reviews_post', $updateData);
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Updated Successfully.</div>');
 		} elseif (isset($postData['do']) && $postData['do'] == "deleteRow") {
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->delete('reviews_post');
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Deleted Successfully.</div>');
 		}
-		redirect('users/db_post_review_update', $data);
+		redirect('users/db_post_review', $data);
 	}
 
 	//Add & Edit User Listing Data
@@ -2908,6 +2928,12 @@ EOD;
 	{
 		if ((!$this->session->userdata('login')) && ($this->session->userdata('type') != "listing")) {
 			redirect('users/login');
+		}
+		// editing: only the signed-in owner's own post (any signed-in user could change any post)
+		$editId = $this->input->post('listingId') ? $this->input->post('listingId') : $this->uri->segment(3);
+		if ($editId && !$this->_owned('post_ad', $editId)) {
+			$this->session->set_flashdata('user_listed', '<div class="alert alert-danger">You can only edit your own posts.</div>');
+			redirect('users/db_all_post');
 		}
 		$userId = $this->session->userdata('uid');
 		$listingId = $this->uri->segment(3);
@@ -3664,11 +3690,11 @@ EOD;
 		$postData = $this->input->post();
 		if (isset($postData['do']) && $postData['do'] == "editRow") {
 			$updateData = array('r_message' => trim($postData['message']));
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->update('reviews_matri', $updateData);
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Updated Successfully.</div>');
 		} elseif (isset($postData['do']) && $postData['do'] == "deleteRow") {
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->delete('reviews_matri');
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Deleted Successfully.</div>');
 		}
@@ -3680,6 +3706,12 @@ EOD;
 	{
 		if ((!$this->session->userdata('login')) && ($this->session->userdata('type') != "listing")) {
 			redirect('users/login');
+		}
+		// editing: only the signed-in owner's own item (any signed-in user could change any item)
+		$editId = $this->input->post('listingId') ? $this->input->post('listingId') : $this->uri->segment(3);
+		if ($editId && !$this->_owned('matrimony', $editId)) {
+			$this->session->set_flashdata('user_listed', '<div class="alert alert-danger">You can only edit your own listings.</div>');
+			redirect('users/db_all_matrimony');
 		}
 		$userId = $this->session->userdata('uid');
 		$listingId = $this->uri->segment(3);
@@ -4436,11 +4468,11 @@ EOD;
 		$postData = $this->input->post();
 		if (isset($postData['do']) && $postData['do'] == "editRow") {
 			$updateData = array('r_message' => trim($postData['message']));
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->update('reviews_spa', $updateData);
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Updated Successfully.</div>');
 		} elseif (isset($postData['do']) && $postData['do'] == "deleteRow") {
-			$this->db->where('r_id', $postData['id']);
+			$this->db->where(array('r_id' => $postData['id'], 'r_userid' => $userId)); // only the user's own review
 			$update = $this->db->delete('reviews_spa');
 			$this->session->set_flashdata('review_updated', '<div class="alert alert-success">Review Deleted Successfully.</div>');
 		}
@@ -4592,7 +4624,7 @@ EOD;
 				'c_date' => $date,
 				'c_monyear' => $month . "-" . $year
 			);
-			$this->db->where('c_id', $postData['listingId']);
+			$this->db->where(array('c_id' => $postData['listingId'], 'c_userid' => $userId)); // only the owner's own
 			$result = $this->db->update('categories', $updateData);
 			$this->session->set_flashdata('categories_listed', '<div class="alert alert-success">Categories Updated Successfully.</div>');
 			redirect('users/all_categories', $data);
@@ -4614,19 +4646,19 @@ EOD;
 		$action = $this->uri->segment(4);
 
 		if ($action == "delete") {
-			$this->db->where('c_id', $listingId);
+			$this->db->where(array('c_id' => $listingId, 'c_userid' => $userId)); // only the owner's own
 			$this->db->delete('categories');
 			$this->session->set_flashdata('categories_listed', '<div class="alert alert-success">Categories Deleted Successfully.</div>');
 			redirect('users/all_categories', $data);
 		} elseif ($action == "dstatus") {
 			$this->db->set('c_status', 0);
-			$this->db->where('c_id', $listingId);
+			$this->db->where(array('c_id' => $listingId, 'c_userid' => $userId)); // only the owner's own
 			$this->db->update('categories');
 			$this->session->set_flashdata('categories_listed', '<div class="alert alert-success">Categories Inactivated Successfully.</div>');
 			redirect('users/all_categories', $data);
 		} elseif ($action == "astatus") {
 			$this->db->set('c_status', 1);
-			$this->db->where('c_id', $listingId);
+			$this->db->where(array('c_id' => $listingId, 'c_userid' => $userId)); // only the owner's own
 			$this->db->update('categories');
 			$this->session->set_flashdata('categories_listed', '<div class="alert alert-success">Categories Activated Successfully.</div>');
 			redirect('users/all_categories', $data);
@@ -4780,7 +4812,7 @@ EOD;
 				'b_date' => $date,
 				'b_monyear' => $month . "-" . $year
 			);
-			$this->db->where('b_id', $postData['listingId']);
+			$this->db->where(array('b_id' => $postData['listingId'], 'b_userid' => $userId)); // only the owner's own
 			$result = $this->db->update('brand', $updateData);
 			$this->session->set_flashdata('brand_listed', '<div class="alert alert-success">Brand Updated Successfully.</div>');
 			redirect('users/all_brand', $data);
@@ -4802,19 +4834,19 @@ EOD;
 		$action = $this->uri->segment(4);
 
 		if ($action == "delete") {
-			$this->db->where('b_id', $listingId);
+			$this->db->where(array('b_id' => $listingId, 'b_userid' => $userId)); // only the owner's own
 			$this->db->delete('brand');
 			$this->session->set_flashdata('brand_listed', '<div class="alert alert-success">Brand Deleted Successfully.</div>');
 			redirect('users/all_brand', $data);
 		} elseif ($action == "dstatus") {
 			$this->db->set('b_status', 0);
-			$this->db->where('b_id', $listingId);
+			$this->db->where(array('b_id' => $listingId, 'b_userid' => $userId)); // only the owner's own
 			$this->db->update('brand');
 			$this->session->set_flashdata('brand_listed', '<div class="alert alert-success">Brand Inactivated Successfully.</div>');
 			redirect('users/all_brand', $data);
 		} elseif ($action == "astatus") {
 			$this->db->set('b_status', 1);
-			$this->db->where('b_id', $listingId);
+			$this->db->where(array('b_id' => $listingId, 'b_userid' => $userId)); // only the owner's own
 			$this->db->update('brand');
 			$this->session->set_flashdata('brand_listed', '<div class="alert alert-success">Brand Activated Successfully.</div>');
 			redirect('users/all_brand', $data);
@@ -4975,7 +5007,7 @@ EOD;
 				's_date' => $date,
 				's_monyear' => $month . "-" . $year
 			);
-			$this->db->where('s_id', $postData['listingId']);
+			$this->db->where(array('s_id' => $postData['listingId'], 's_userid' => $userId)); // only the owner's own
 			$result = $this->db->update('sub_categories', $updateData);
 			$this->session->set_flashdata('sub_categories_listed', '<div class="alert alert-success">SubCategoriess Updated Successfully.</div>');
 			redirect('users/all_sub_categories', $data);
@@ -4997,19 +5029,19 @@ EOD;
 		$action = $this->uri->segment(4);
 
 		if ($action == "delete") {
-			$this->db->where('s_id', $listingId);
+			$this->db->where(array('s_id' => $listingId, 's_userid' => $userId)); // only the owner's own
 			$this->db->delete('sub_categories');
 			$this->session->set_flashdata('sub_categories_listed', '<div class="alert alert-success">SubCategoriess Deleted Successfully.</div>');
 			redirect('users/all_sub_categories', $data);
 		} elseif ($action == "dstatus") {
 			$this->db->set('s_status', 0);
-			$this->db->where('s_id', $listingId);
+			$this->db->where(array('s_id' => $listingId, 's_userid' => $userId)); // only the owner's own
 			$this->db->update('sub_categories');
 			$this->session->set_flashdata('sub_categories_listed', '<div class="alert alert-success">SubCategoriess Inactivated Successfully.</div>');
 			redirect('users/all_sub_categories', $data);
 		} elseif ($action == "astatus") {
 			$this->db->set('s_status', 1);
-			$this->db->where('s_id', $listingId);
+			$this->db->where(array('s_id' => $listingId, 's_userid' => $userId)); // only the owner's own
 			$this->db->update('sub_categories');
 			$this->session->set_flashdata('sub_categories_listed', '<div class="alert alert-success">SubCategoriess Activated Successfully.</div>');
 			redirect('users/all_sub_categories', $data);
@@ -5023,6 +5055,12 @@ EOD;
 	{
 		if ((!$this->session->userdata('login')) && ($this->session->userdata('type') != "listing")) {
 			redirect('users/login');
+		}
+		// editing: only the signed-in owner's own item (any signed-in user could change any item)
+		$editId = $this->input->post('listingId') ? $this->input->post('listingId') : $this->uri->segment(3);
+		if ($editId && !$this->_owned('spa', $editId)) {
+			$this->session->set_flashdata('user_listed', '<div class="alert alert-danger">You can only edit your own listings.</div>');
+			redirect('users/db_all_spa');
 		}
 		$userId = $this->session->userdata('uid');
 		$listingId = $this->uri->segment(3);
@@ -5847,4 +5885,562 @@ EOD;
 			->set_content_type('application/json', 'utf-8')
 			->set_output(json_encode($data));
 	}
+
+	/* ------------------------------------------------------------------ */
+	/* React pages of the listing owner area: api_data/<page> (React_pages) */
+	/* ------------------------------------------------------------------ */
+
+	/** The signed-in user's row, or null (the pages sent visitors to users/login). */
+	private function _owner()
+	{
+		if (!$this->session->userdata('login')) {
+			return null;
+		}
+		$user = $this->User_Model->getuserInfo($this->session->userdata('uid'));
+		if ($user) {
+			unset($user['u_password'], $user['u_token']); // never sent to the browser
+		}
+		return $user;
+	}
+
+	private function _login_redirect()
+	{
+		return array('redirect' => base_url() . 'users/login');
+	}
+
+	/** A date as the views printed it with date($format, strtotime(...)). */
+	private function _date($value, $format = 'd M Y')
+	{
+		return date($format, strtotime((string) $value));
+	}
+
+	/** number_format() of a listing's average rating (reviews of every status, as the dashboard counted). */
+	private function _avg_rating($listingId)
+	{
+		$row = $this->db->query("SELECT avg(r_rating) AS avg_rating FROM reviews WHERE r_postid = " . $this->db->escape($listingId))->row_array();
+		return number_format((float) $row['avg_rating'], 1);
+	}
+
+	/** users/dashboard (views/users/dashboard.php) */
+	private function _data_dashboard($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$uid = $this->db->escape($user['u_id']);
+		$rows = function ($table) use ($uid) {
+			return $this->db->query("SELECT * FROM `$table` WHERE l_userid = $uid ORDER BY l_adddate DESC LIMIT 5")->result_array();
+		};
+		$recent = function ($table) use ($rows) {
+			$out = array();
+			foreach ($rows($table) as $r) {
+				$out[] = array(
+					'l_id' => $r['l_id'], 'l_title' => $r['l_title'], 'l_city' => $r['l_city'], 'l_status' => $r['l_status'],
+					'l_visitor' => isset($r['l_visitor']) ? $r['l_visitor'] : null, 'l_type' => $r['l_type'],
+					'l_payment' => isset($r['l_payment']) ? $r['l_payment'] : null,
+					'added' => $this->_date($r['l_adddate']),
+					'renewal' => $this->_date(isset($r['l_renewal']) ? $r['l_renewal'] : ''),
+					'rating' => $this->_avg_rating($r['l_id']),
+				);
+			}
+			return $out;
+		};
+		$count = function ($sql) {
+			return $this->db->query($sql)->num_rows();
+		};
+		return array(
+			'user' => $user,
+			'counts' => array(
+				'listings' => $count("SELECT * FROM `listing` WHERE `l_userid` = $uid"),
+				'reviews' => $count("SELECT * FROM `reviews` WHERE `r_userid` = $uid"),
+				'posts' => $count("SELECT * FROM `post_ad` WHERE `l_userid` = $uid"),
+				'postReviews' => $count("SELECT * FROM `reviews_post` WHERE `r_userid` = $uid"),
+			),
+			'listings' => $recent('listing'),
+			'posts' => $recent('post_ad'),
+		);
+	}
+
+	/**
+	 * The owner's items of one kind, newest first, with their average rating
+	 * (views/users/db-all-listing.php and its post / matrimony / spa twins).
+	 */
+	private function _owner_items($table, $reviewTable)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$uid = $this->db->escape($user['u_id']);
+		$ratings = array();
+		foreach ($this->db->query("SELECT r_postid, avg(r_rating) AS avg_rating FROM `$reviewTable` WHERE r_postid IN (SELECT l_id FROM `$table` WHERE l_userid = $uid) GROUP BY r_postid")->result_array() as $r) {
+			$ratings[$r['r_postid']] = $r['avg_rating'];
+		}
+		$items = array();
+		foreach ($this->db->query("SELECT l_id, l_title, l_city, l_status, l_adddate FROM `$table` WHERE l_userid = $uid ORDER BY l_adddate DESC")->result_array() as $r) {
+			$items[] = array(
+				'l_id' => $r['l_id'], 'l_title' => $r['l_title'], 'l_city' => $r['l_city'], 'l_status' => $r['l_status'],
+				'urlTitle' => url_title($r['l_title']),
+				'added' => $this->_date($r['l_adddate']),
+				'addedSort' => $r['l_adddate'],
+				'rating' => number_format((float) (isset($ratings[$r['l_id']]) ? $ratings[$r['l_id']] : 0), 1),
+			);
+		}
+		return array('user' => $user, 'items' => $items);
+	}
+
+	private function _data_db_all_listing($args)
+	{
+		return $this->_owner_items('listing', 'reviews');
+	}
+
+	private function _data_db_all_post($args)
+	{
+		return $this->_owner_items('post_ad', 'reviews');
+	}
+
+	private function _data_db_all_matrimony($args)
+	{
+		return $this->_owner_items('matrimony', 'reviews_matri');
+	}
+
+	private function _data_db_all_spa($args)
+	{
+		return $this->_owner_items('spa', 'reviews_spa');
+	}
+
+	/**
+	 * users/db_all_enquiry (views/users/db-all-enquiry.php). The PHP page listed
+	 * every enquiry of the whole site to every owner; only enquiries about the
+	 * owner's own listings are shown now.
+	 */
+	private function _data_db_all_enquiry($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$rows = $this->db->query("SELECT s.*, l.l_title FROM `listing_service` s JOIN `listing` l ON l.l_id = s.listing WHERE l.l_userid = " . $this->db->escape($user['u_id']) . " ORDER BY s.id DESC")->result_array();
+		$enquiries = array();
+		foreach ($rows as $r) {
+			$message = (string) $r['message'];
+			if (strlen($message) > 300) {
+				$cut = substr($message, 0, 300);
+				$message = substr($cut, 0, strrpos($cut, ' ')) . '...';
+			}
+			$enquiries[] = array(
+				'id' => $r['id'], 'date' => $this->_date($r['date']), 'time' => $r['time'], 'l_title' => $r['l_title'],
+				'name' => $r['name'], 'mobile' => $r['mobile'], 'email' => $r['email'], 'message' => $message,
+			);
+		}
+		return array('user' => $user, 'enquiries' => $enquiries);
+	}
+
+	/** The item exists and belongs to the signed-in user. */
+	private function _owned($table, $id)
+	{
+		$uid = $this->session->userdata('uid');
+		return $uid && $this->db->where(array('l_id' => $id, 'l_userid' => $uid))->count_all_results($table) > 0;
+	}
+
+	/**
+	 * The listing / matrimony / spa kinds of the add and edit forms:
+	 * [item table, category table, sub category table, cover folder, service image folder, list page].
+	 */
+	private function _item_kind($kind)
+	{
+		$kinds = array(
+			'listing' => array('listing', 'category', 'sub_category', 'assets/images/list-deta/', 'assets/images/services/', 'users/db_all_listing'),
+			'matrimony' => array('matrimony', 'category_matrimony', 'sub_category_matrimony', 'assets/images/matrimony-data/', 'assets/images/matrimony-services/', 'users/db_all_matrimony'),
+			'spa' => array('spa', 'category_spa', 'sub_category_spa', 'assets/images/spa-data/', 'assets/images/spa-services/', 'users/db_all_spa'),
+			'post' => array('post_ad', 'category', 'sub_category', 'assets/images/post-data/', 'assets/images/post-services/', 'users/db_all_post'),
+		);
+		return $kinds[$kind];
+	}
+
+	/** The add forms (views/users/db-listing-add.php and its matrimony / spa twins). */
+	private function _data_db_listing_add($args)
+	{
+		return ($user = $this->_owner()) ? array('user' => $user) : $this->_login_redirect();
+	}
+
+	private function _data_db_matrimony_add($args)
+	{
+		return $this->_data_db_listing_add($args);
+	}
+
+	private function _data_db_spa_add($args)
+	{
+		return $this->_data_db_listing_add($args);
+	}
+
+	/** The edit forms (views/users/db-listing-edit.php ...): the item, only the owner's own. */
+	private function _item_edit_data($kind, $args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		list($table, $cateTable, , $coverDir, $serviceDir, $listPage) = $this->_item_kind($kind);
+		$id = isset($args[0]) ? $args[0] : '';
+		$row = $this->db->get_where($table, array('l_id' => $id, 'l_userid' => $user['u_id']))->row_array();
+		if (!$row) {
+			$this->session->set_flashdata('user_listed', '<div class="alert alert-danger">You can only edit your own listings.</div>');
+			return array('redirect' => base_url() . $listPage);
+		}
+		$name = explode(' ', (string) $row['l_fullname']);
+		$loc = $this->db->get_where('location', array('loc_id' => $row['l_loc_id']))->row_array();
+		$cate = $this->db->get_where($cateTable, array('c_name' => $row['l_category']))->row_array();
+		$timing = explode(' to ', (string) $row['l_timing']);
+		$image = function ($dir, $file) {
+			return $file != '' ? base_url() . $dir . $file : base_url() . 'assets/images/services/default.png';
+		};
+		$services = array();
+		for ($i = 1; $i <= 6; $i++) {
+			$services[] = array(
+				'name' => (string) $row["l_serviceName$i"],
+				'image' => $image($serviceDir, (string) $row["l_serviceImage$i"]),
+			);
+		}
+		return array(
+			'user' => $user,
+			'item' => array(
+				'l_id' => $row['l_id'],
+				'fname' => $name[0],
+				'lname' => isset($name[1]) ? $name[1] : '',
+				'title' => $row['l_title'],
+				'phone' => $row['l_phone'],
+				'landline' => isset($row['l_landline']) ? $row['l_landline'] : '',
+				'whatsapp' => isset($row['l_whatsapp']) ? $row['l_whatsapp'] : '',
+				'email' => $row['l_email'],
+				'website' => $row['l_website'],
+				'address' => $row['l_address'],
+				'location' => $loc ? $loc['loc_name'] : '',
+				'cate' => $cate ? $cate['c_name'] : '',
+				// the edit page printed every sub category joined with nothing between them
+				'subcate' => str_replace(', ', '', (string) $row['l_subcategory']),
+				'opendays' => array_values(array_filter(explode(' : ', (string) $row['l_opendays']), 'strlen')),
+				'opentime' => $timing[0],
+				'closetime' => isset($timing[1]) ? $timing[1] : '',
+				'desc' => $row['l_desc'],
+				'key' => $row['l_key'],
+				'job_apply' => isset($row['l_job_apply']) && $row['l_job_apply'] == 1,
+				'facebook' => $row['l_facebook'],
+				'google' => $row['l_google'],
+				'twitter' => $row['l_twitter'],
+				'googleMap' => $row['l_googleMap'],
+				'degreeView' => $row['l_degreeView'],
+				'coverImage' => $row['l_coverImage'] != '' ? base_url() . $coverDir . $row['l_coverImage'] : base_url() . 'assets/images/services/default.png',
+				'services' => $services,
+			),
+		);
+	}
+
+	private function _data_db_listing_edit($args)
+	{
+		return $this->_item_edit_data('listing', $args);
+	}
+
+	private function _data_db_matrimony_edit($args)
+	{
+		return $this->_item_edit_data('matrimony', $args);
+	}
+
+	private function _data_db_spa_edit($args)
+	{
+		return $this->_item_edit_data('spa', $args);
+	}
+
+	/**
+	 * GET users/api_suggest?kind=listing|matrimony|spa&field=location|category|subcategory|title&q=&cate=
+	 * The autocomplete of the add / edit forms (views/users/response.php, connect/response.php) as JSON.
+	 */
+	public function api_suggest()
+	{
+		$kind = $this->input->get('kind');
+		$kind = in_array($kind, array('listing', 'matrimony', 'spa'), true) ? $kind : 'listing';
+		list($table, $cateTable, $subTable) = $this->_item_kind($kind);
+		$q = (string) $this->input->get('q');
+		$like = function ($column) use ($q) {
+			$this->db->like($column, $q);
+		};
+		$names = array();
+		switch ($this->input->get('field')) {
+			case 'location':
+				$like('loc_name');
+				$rows = $this->db->select('loc_name AS name')->where('loc_status', 'active')->order_by('loc_name', 'ASC')->limit(10)->get('location')->result_array();
+				break;
+			case 'category':
+				$like('c_name');
+				$rows = $this->db->select('c_name AS name')->where('c_status', 'active')->order_by('c_name', 'ASC')->limit(10)->get($cateTable)->result_array();
+				break;
+			case 'subcategory':
+				$cate = $this->db->get_where($cateTable, array('c_name' => (string) $this->input->get('cate')))->row_array();
+				$like('name');
+				$rows = $this->db->select('name')->where(array('c_id' => $cate ? $cate['c_id'] : '', 'status' => '1'))->order_by('name', 'ASC')->limit(10)->get($subTable)->result_array();
+				break;
+			case 'title':
+				$like('l_title');
+				$rows = $this->db->select('l_title AS name')->where('l_claim', '0')->order_by('l_title', 'ASC')->limit(10)->get($table)->result_array();
+				break;
+			default:
+				$rows = array();
+		}
+		foreach ($rows as $r) {
+			$names[] = $r['name'];
+		}
+		$this->_react_json($names);
+	}
+
+	/**
+	 * The reviews the owner wrote, with the reviewed item's title and image
+	 * (views/users/db-review.php, db-post-review.php; the matrimony and spa
+	 * review pages had no view and did not open).
+	 */
+	private function _owner_reviews($reviewTable, $itemTable)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$rows = $this->db->query("SELECT r.r_id, r.r_rating, r.r_message, i.l_title, i.l_img FROM `$reviewTable` r LEFT JOIN `$itemTable` i ON i.l_id = r.r_postid WHERE r.r_userid = " . $this->db->escape($user['u_id']))->result_array();
+		return array('user' => $user, 'reviews' => $rows);
+	}
+
+	private function _data_db_review($args)
+	{
+		return $this->_owner_reviews('reviews', 'listing');
+	}
+
+	private function _data_db_post_review($args)
+	{
+		return $this->_owner_reviews('reviews_post', 'post_ad');
+	}
+
+	private function _data_db_matrimony_review($args)
+	{
+		return $this->_owner_reviews('reviews_matri', 'matrimony');
+	}
+
+	private function _data_db_spa_review($args)
+	{
+		return $this->_owner_reviews('reviews_spa', 'spa');
+	}
+
+	/** users/profile and users/profile_edit (views/users/profile.php, profile-edit.php). */
+	private function _data_profile($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$user['dobText'] = $this->_date($user['u_dob']);
+		return array('user' => $user);
+	}
+
+	private function _data_profile_edit($args)
+	{
+		return $this->_data_profile($args);
+	}
+
+	/**
+	 * users/claim_business (views/users/claim-business.php, claim-business2.php):
+	 * step 1 picks the business, step 2 (while the session holds it) asks for
+	 * the OTP e-mailed to the listing. ?restart=1 goes back to step 1.
+	 */
+	private function _data_claim_business($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		if ($this->input->get('restart')) {
+			$this->session->unset_userdata('claim_title');
+		}
+		$title = $this->session->userdata('claim_title');
+		return array('user' => $user, 'claiming' => $title ? $title : null);
+	}
+
+	/** users/db_jobs (views/users/db-jobs.php): applications to the owner's listings, and job resumes. */
+	private function _data_db_jobs($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$uid = $this->db->escape($user['u_id']);
+		$short = function ($text, $max) {
+			$text = (string) $text;
+			if (strlen($text) <= $max) {
+				return $text;
+			}
+			$cut = substr($text, 0, $max);
+			return substr($cut, 0, strrpos($cut, ' ')) . '...';
+		};
+		$applied = array();
+		foreach ($this->db->query("SELECT a.*, l.l_title FROM job_apply a LEFT JOIN listing l ON l.l_id = a.job_post WHERE a.job_user = $uid ORDER BY a.id DESC")->result_array() as $r) {
+			$applied[] = array(
+				'id' => $r['id'], 'date' => $this->_date($r['job_date']), 'time' => $r['job_time'], 'l_title' => $r['l_title'],
+				'name' => $r['job_fname'], 'mobile' => $r['job_mobile'], 'email' => $r['job_email'], 'file' => $r['job_file'],
+				'message' => $short($r['job_message'], 30),
+			);
+		}
+		$resumes = array();
+		foreach ($this->db->query("SELECT r.*, j.position FROM job_apply_resume r LEFT JOIN job j ON j.id = r.job_id WHERE r.user_id = $uid")->result_array() as $r) {
+			$resumes[] = array(
+				'id' => $r['id'], 'date' => $this->_date($r['created_date']), 'job_id' => $r['job_id'], 'position' => $r['position'],
+				'name' => $r['name'], 'phone' => $r['phone'], 'email' => $r['email'], 'resume' => str_replace(' ', '_', (string) $r['resume']),
+			);
+		}
+		return array('user' => $user, 'applied' => $applied, 'resumes' => $resumes);
+	}
+
+	/** users/db_all_orders (views/users/all-order.php): cash orders and paid online orders of the owner's shop. */
+	private function _data_db_all_orders($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$uid = $this->db->escape($user['u_id']);
+		$orders = $this->db->query("SELECT order_id, fname, lname, email, phone, total, payment_opt, created_dt FROM `rb_order_master_data` WHERE list_userid = $uid AND (payment_opt = 'cod' OR (payment_opt = 'online' AND paid = '1')) ORDER BY order_id DESC LIMIT 100")->result_array();
+		return array('user' => $user, 'orders' => $orders);
+	}
+
+	/** users/view_order/<id> (views/users/view-order.php): the invoice of one of the owner's orders. */
+	private function _data_view_order($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$order = $this->db->get_where('rb_order_master_data', array('order_id' => isset($args[0]) ? $args[0] : '', 'list_userid' => $user['u_id']))->row_array();
+		if (!$order) {
+			return array('redirect' => base_url() . 'users/db_all_orders');
+		}
+		$items = $this->db->get_where('rb_order_details', array('order_id' => $order['order_id']))->result_array();
+		return array('user' => $user, 'order' => $order, 'items' => $items);
+	}
+
+	/** users/all_product (views/users/all-product.php) */
+	private function _data_all_product($args)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$products = array();
+		foreach ($this->db->query("SELECT p_id, p_name, p_img, p_adddate, p_status FROM `product` WHERE p_userid = " . $this->db->escape($user['u_id']) . " ORDER BY p_id DESC")->result_array() as $r) {
+			$products[] = $r + array('added' => $this->_date($r['p_adddate']));
+		}
+		return array('user' => $user, 'products' => $products);
+	}
+
+	/**
+	 * The choices of the product form (views/users/add-product.php, edit-product.php):
+	 * the owner's shop listings, groups, and the owner's categories, sub categories
+	 * and brands; with the product when editing (only the owner's own).
+	 */
+	private function _product_form_data($productId = null)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$uid = $user['u_id'];
+		$data = array(
+			'user' => $user,
+			'today' => date('Y-m-d'),
+			'listings' => $this->db->query("SELECT l_id, l_title FROM listing WHERE l_userid = " . $this->db->escape($uid) . " AND l_shopping = '1' ORDER BY l_adddate DESC")->result_array(),
+			'groups' => $this->db->query("SELECT g_title FROM `groups` WHERE g_status = '1'")->result_array(),
+			'categories' => $this->db->query("SELECT c_id, c_title FROM `categories` WHERE c_userid = " . $this->db->escape($uid) . " AND c_status = '1'")->result_array(),
+			'subcategories' => $this->db->query("SELECT s_category, s_title FROM `sub_categories` WHERE s_userid = " . $this->db->escape($uid) . " AND s_status = '1' GROUP BY s_category, s_title ORDER BY MAX(s_id) DESC")->result_array(),
+			'brands' => $this->db->query("SELECT b_title FROM `brand` WHERE b_userid = " . $this->db->escape($uid) . " AND b_status = '1'")->result_array(),
+		);
+		if ($productId !== null) {
+			$product = $this->db->get_where('product', array('p_id' => $productId, 'p_userid' => $uid))->row_array();
+			if (!$product) {
+				$this->session->set_flashdata('product_listed', '<div class="alert alert-danger">You can only edit your own products.</div>');
+				return array('redirect' => base_url() . 'users/all_product');
+			}
+			foreach (array('p_color', 'p_stock', 'p_specification_label', 'p_specification_desc') as $json) {
+				$product[$json] = json_decode((string) $product[$json], true) ?: array();
+			}
+			$data['product'] = $product;
+		}
+		return $data;
+	}
+
+	private function _data_add_product($args)
+	{
+		return $this->_product_form_data();
+	}
+
+	private function _data_edit_product($args)
+	{
+		return $this->_product_form_data(isset($args[0]) ? $args[0] : '');
+	}
+
+	/**
+	 * The shop's categories / brands / sub categories (views/users/all-categories.php,
+	 * all-brand.php, all-sub-categories.php and their add / edit forms): the owner's own rows.
+	 */
+	private function _taxonomy($table, $pre, $limit = '')
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$short = function ($text) {
+			$text = (string) $text;
+			if (strlen($text) <= 30) {
+				return $text;
+			}
+			$cut = substr($text, 0, 30);
+			return substr($cut, 0, strrpos($cut, ' ')) . '...';
+		};
+		$rows = array();
+		foreach ($this->db->query("SELECT * FROM `$table` WHERE {$pre}_userid = " . $this->db->escape($user['u_id']) . " ORDER BY {$pre}_id DESC $limit")->result_array() as $r) {
+			$rows[] = array(
+				'id' => $r["{$pre}_id"], 'title' => $r["{$pre}_title"], 'message' => $short($r["{$pre}_message"]),
+				'status' => $r["{$pre}_status"], 'date' => $this->_date($r["{$pre}_date"]),
+			);
+		}
+		return array('user' => $user, 'rows' => $rows);
+	}
+
+	private function _taxonomy_form($table, $pre, $args, $listPage, $flashKey)
+	{
+		if (!($user = $this->_owner())) {
+			return $this->_login_redirect();
+		}
+		$data = array(
+			'user' => $user,
+			'groups' => $this->db->query("SELECT g_id, g_title FROM `groups` WHERE g_status = '1'")->result_array(),
+			'categories' => $this->db->query("SELECT c_id, c_title FROM `categories` WHERE c_userid = " . $this->db->escape($user['u_id']) . " AND c_status = '1'")->result_array(),
+		);
+		if ($args !== null) {
+			$row = $this->db->get_where($table, array("{$pre}_id" => isset($args[0]) ? $args[0] : '', "{$pre}_userid" => $user['u_id']))->row_array();
+			if (!$row) {
+				$this->session->set_flashdata($flashKey, '<div class="alert alert-danger">You can only edit your own entries.</div>');
+				return array('redirect' => base_url() . $listPage);
+			}
+			$data['row'] = array(
+				'id' => $row["{$pre}_id"], 'title' => $row["{$pre}_title"], 'message' => $row["{$pre}_message"], 'status' => $row["{$pre}_status"],
+				'group' => isset($row["{$pre}_group"]) ? $row["{$pre}_group"] : null,
+				'category' => isset($row["{$pre}_category"]) ? $row["{$pre}_category"] : null,
+			);
+		}
+		return $data;
+	}
+
+	private function _data_all_categories($args) { return $this->_taxonomy('categories', 'c'); }
+	private function _data_all_brand($args) { return $this->_taxonomy('brand', 'b', 'LIMIT 100'); }
+	private function _data_all_sub_categories($args) { return $this->_taxonomy('sub_categories', 's', 'LIMIT 100'); }
+	private function _data_add_categories($args) { return $this->_taxonomy_form('categories', 'c', null, 'users/all_categories', 'categories_listed'); }
+	private function _data_add_brand($args) { return $this->_taxonomy_form('brand', 'b', null, 'users/all_brand', 'brand_listed'); }
+	private function _data_add_sub_categories($args) { return $this->_taxonomy_form('sub_categories', 's', null, 'users/all_sub_categories', 'sub_categories_listed'); }
+	private function _data_edit_categories($args) { return $this->_taxonomy_form('categories', 'c', $args, 'users/all_categories', 'categories_listed'); }
+	private function _data_edit_brand($args) { return $this->_taxonomy_form('brand', 'b', $args, 'users/all_brand', 'brand_listed'); }
+	private function _data_edit_sub_categories($args) { return $this->_taxonomy_form('sub_categories', 's', $args, 'users/all_sub_categories', 'sub_categories_listed'); }
+
+	/** The post ad forms (views/users/db-post-add.php, db-post-edit.php). */
+	private function _data_db_post_add($args)
+	{
+		return $this->_data_db_listing_add($args);
+	}
+
+	private function _data_db_post_edit($args)
+	{
+		return $this->_item_edit_data('post', $args);
+	}
 }
+

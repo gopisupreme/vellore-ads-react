@@ -169,7 +169,8 @@ function registerServiceWorker() {
 
 /** footer.php: visitor counter (one count per 2 hours, cookie-based on the server). */
 export function countVisit() {
-  axios.post('/pages/counter', undefined, { responseType: 'text' }).catch(() => {});
+  // backend/app/index.php (not pages/counter, which would use up the session's one-time messages)
+  axios.post('/api/counter', undefined, { responseType: 'text' }).catch(() => {});
 }
 
 /** footer.php: turn .youtube placeholders into thumbnails that load the video on click. */

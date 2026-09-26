@@ -370,6 +370,36 @@ final class Site
 		'recruiter/register' => array('recruiter-register', 'Register', array('_registered', 'user_registered', 'emessage')),
 	);
 
+	/**
+	 * Signed-in areas whose pages the React app renders (pages.json: section ->
+	 * method -> page title; also read by vite.config.js). The page loads its data from <section>/api_data/<method>
+	 * (the controller's JSON twin of the PHP view) and submits its forms to
+	 * the controller's existing handlers (see application/helpers/react_helper.php).
+	 * Other URLs of these sections (log out, delete links ...) stay PHP.
+	 */
+	/** APP_PAGES as loaded from pages.json. */
+	private static $appPages;
+
+	public static function appPages()
+	{
+		if (self::$appPages === null) {
+			self::$appPages = (array) json_decode((string) file_get_contents(__DIR__ . '/pages.json'), true);
+		}
+		return self::$appPages;
+	}
+
+	/** "users/dashboard" ... for the React app's link handling (src/config/site.js). */
+	public static function appPaths()
+	{
+		$paths = array();
+		foreach (self::appPages() as $section => $pages) {
+			foreach (array_keys($pages) as $method) {
+				$paths[] = $section . '/' . $method;
+			}
+		}
+		return $paths;
+	}
+
 	/** First URL segments that belong to the PHP site (src/config/site.js PHP_PREFIXES). */
 	const PHP_PREFIXES = array(
 		'api', 'app', 'assets', 'assetsa', 'uploads', 'images', 'js', 'css', 'public', 'products', 'investor',
@@ -473,6 +503,7 @@ final class Site
 			'locations' => $this->db->rows("SELECT `loc_id`, `loc_name` FROM `location` WHERE `loc_status` = 'active' ORDER BY `loc_name` ASC"),
 			'pageOpens' => $page ? $page['page_opens'] : 0,
 			'reactPages' => self::REACT_PAGES,
+			'appPages' => self::appPaths(),
 			'session' => $this->session(),
 		);
 	}
@@ -481,6 +512,10 @@ final class Site
 	public function session()
 	{
 		$uid = Session::get('uid');
+		$user = $uid ? $this->db->row("SELECT * FROM `users` WHERE `u_id` = " . $this->db->q($uid)) : null;
+		if ($user) {
+			unset($user['u_password'], $user['u_token']); // never sent to the browser
+		}
 		return array(
 			'city' => (string) Session::get('city'),
 			'title' => (string) Session::get('title'),
@@ -488,7 +523,7 @@ final class Site
 			'type' => (string) Session::get('type'),
 			'email' => (string) Session::get('email'),
 			'username' => (string) Session::get('username'),
-			'user' => $uid ? $this->db->row("SELECT * FROM `users` WHERE `u_id` = " . $this->db->q($uid)) : null,
+			'user' => $user,
 		);
 	}
 
@@ -515,6 +550,17 @@ final class Site
 			list($view, $title) = self::ACCOUNT_PAGES[$account];
 			Session::set('city', $this->company()['city']); // Users::__construct()
 			$page = array('view' => $view, 'route' => 'account', 'params' => array('page' => $account), 'title' => $title);
+		} elseif (count($segs) >= 2 && isset(self::appPages()[strtolower($segs[0])][strtolower(str_replace('-', '_', $segs[1]))])) {
+			// CodeIgniter's translate_uri_dashes: users/db-all-listing is users/db_all_listing
+			$section = strtolower($segs[0]);
+			$method = strtolower(str_replace('-', '_', $segs[1]));
+			Session::set('city', $this->company()['city']); // the controllers' constructors
+			$page = Session::get('login')
+				? array('view' => "$section/$method", 'route' => 'app',
+					'params' => array('section' => $section, 'method' => $method, 'args' => array_slice($segs, 2)),
+					'title' => self::appPages()[$section][$method])
+				// the controllers sent visitors who are not signed in to the sign-in page
+				: array('view' => 'redirect', 'redirect' => $this->baseUrl() . 'users/login');
 		} elseif (in_array(strtolower($segs[0]), self::PHP_PREFIXES, true) || count($segs) > 3
 			|| preg_match('/\.(php|html?|xml|txt|js|css|png|jpe?g|gif|webp|svg|ico|pdf|json)$/i', end($segs))) {
 			$page = array('view' => 'legacy');
@@ -1248,6 +1294,20 @@ final class Site
 		return $this->baseUrl() . $city2 . '/' . $title2;
 	}
 
+	/**
+	 * Pages::counter(): the footer's visitor count, once per visitor per two
+	 * hours (cookie "visitors"). Here rather than in CodeIgniter so it does not
+	 * use up the session's one-time (flash) messages of the page being opened.
+	 */
+	public function countSiteVisit()
+	{
+		if (!empty($_COOKIE['visitors'])) {
+			return;
+		}
+		@setcookie('visitors', isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '', time() + 7200, '/');
+		$this->db->exec("UPDATE `page` SET `page_opens` = `page_opens` + 1 WHERE `id` = 1");
+	}
+
 	/** Pages::post_like() for the signed-in visitor. */
 	public function like($listingId)
 	{
@@ -1308,6 +1368,7 @@ final class App
 	 *   POST /api/listings                   list page results
 	 *   GET  /api/reviews?listing=&offset=   next 5 reviews
 	 *   POST /api/like                       listing -> { message }
+	 *   POST /api/counter                    counts the visit (footer counter)
 	 */
 	private static function api($endpoint)
 	{
@@ -1343,6 +1404,10 @@ final class App
 				break;
 			case 'like':
 				self::json(array('message' => $site->like($post('listing'))));
+				break;
+			case 'counter':
+				$site->countSiteVisit();
+				self::json(array('ok' => true));
 				break;
 			default:
 				self::json(array('error' => 'Unknown endpoint'), 404);

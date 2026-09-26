@@ -7,9 +7,10 @@ import search, { searchSaga } from './search.js';
 import listings, { listingsSaga } from './listings.js';
 import listing, { listingSaga } from './listing.js';
 import account, { accountSaga } from './account.js';
+import app, { appSaga, appFormSubmitted } from './app.js';
 
 function* rootSaga() {
-  yield all([pageSaga(), searchSaga(), listingsSaga(), listingSaga(), accountSaga()]);
+  yield all([pageSaga(), searchSaga(), listingsSaga(), listingSaga(), accountSaga(), appSaga()]);
 }
 
 /**
@@ -19,7 +20,7 @@ function* rootSaga() {
 export function createStore({ boot, initialPage }) {
   const sagas = createSagaMiddleware();
   const store = configureStore({
-    reducer: { site, page, search, listings, listing, account },
+    reducer: { site, page, search, listings, listing, account, app },
     preloadedState: { site: initialSiteState(boot), page: { current: initialPage } },
     middleware: (getDefault) => getDefault({
       thunk: false,
@@ -27,8 +28,8 @@ export function createStore({ boot, initialPage }) {
       immutableCheck: { ignoredPaths: ['site.boot', 'page.current'] },
       serializableCheck: {
         ignoredPaths: ['site.boot', 'page.current'],
-        ignoredActions: [pageLoaded.type],
-        ignoredActionPaths: ['meta.form'],
+        ignoredActions: [pageLoaded.type, appFormSubmitted.type],
+        ignoredActionPaths: ['meta.form', 'meta.formData'],
       },
     }).concat(sagas),
   });

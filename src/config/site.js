@@ -38,7 +38,7 @@ export const ACCOUNT_PATH = /^\/(users\/(login|register|forgot_pass|recruiter_lo
  * Mirrors ReactApp::index(): 2–3 segment URLs are city/category/listing pages,
  * single segments are content pages, locations or 404s.
  */
-export function isSpaPath(pathname, { reactPages = [], locations = [] } = {}) {
+export function isSpaPath(pathname, { reactPages = [], locations = [], appPages = [] } = {}) {
   let segs;
   try {
     segs = pathname.split('/').filter(Boolean).map(decodeURIComponent);
@@ -47,6 +47,8 @@ export function isSpaPath(pathname, { reactPages = [], locations = [] } = {}) {
   }
   if (segs.length === 0) return true;
   if (ACCOUNT_PATH.test(pathname)) return true;
+  // pages of signed-in areas rendered by React (backend/app/pages.json), e.g. users/db_listing_edit/12
+  if (segs.length >= 2 && appPages.includes(`${segs[0]}/${segs[1].replaceAll('-', '_')}`.toLowerCase())) return true;
   if (phpPrefixSet.has(segs[0].toLowerCase())) return false;
   if (segs.some((s) => /\.(php|html?|xml|txt|js|css|png|jpe?g|gif|webp|svg|ico|pdf|json)$/i.test(s))) return false;
   if (segs[0] === 'blog') return segs.length >= 3;
